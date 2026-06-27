@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baccarat Martingale Tracker</title>
+<style>
+:root{
+  --ink:#16244a;
+  --red:#e03131;
+  --red-d:#c92a2a;
+  --blue:#3b5bdb;
+  --blue-d:#2f49b5;
+  --green:#2f9e44;
+  --green-b:#37b24d;
+  --gray:#868e96;
+  --gray-d:#5c636a;
+  --page:#dfe6f3;
+  --card-border:#e2e8f5;
+  --soft:#f4f7fc;
+  --yellow:#f7c948;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Segoe UI',Roboto,system-ui,-apple-system,sans-serif;
+  background:var(--page);
+  color:var(--ink);
+  padding:22px 14px 50px;
+  min-height:100vh;
+}
+.app{
+  max-width:920px;margin:0 auto;
+  background:#fff;
+  border:5px solid var(--ink);
+  border-radius:22px;
+  padding:14px;
+  display:flex;flex-direction:column;gap:14px;
+  box-shadow:0 18px 40px rgba(22,36,74,.22);
+}
+.panel{
+  background:#fff;
+  border:2px solid var(--card-border);
+  border-radius:16px;
+  padding:16px;
+}
+
+/* board */
+.board-panel{background:var(--soft);overflow-x:auto}
+.board{display:flex;gap:5px;min-height:182px}
+.bcol{display:flex;flex-direction:column;gap:5px}
+.cell{
+  width:40px;height:40px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:19px;color:#fff;position:relative;
+  box-shadow:0 1px 2px rgba(0,0,0,.12);
+}
+.cell.B{background:var(--red)}
+.cell.P{background:var(--blue)}
+.cell.empty{background:#fff;border:1.5px solid #d7e0f1;box-shadow:none}
+.cell.active{border:3px solid var(--yellow);box-shadow:0 0 0 2px rgba(247,201,72,.35)}
+.cell .tick{position:absolute;bottom:1px;right:3px;font-size:11px;font-weight:900;opacity:.95}
+
+/* next bets */
+.next-title{text-align:center;font-size:21px;font-weight:800;margin-bottom:12px}
+.next-chips{display:flex;justify-content:center;gap:12px;margin-bottom:14px}
+.nchip{
+  width:48px;height:48px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:22px;color:#fff;
+}
+.nchip.B{background:var(--red)}
+.nchip.P{background:var(--blue)}
+.nchip.dim{opacity:.4}
+.nchip.now{background:var(--green-b);box-shadow:0 0 0 3px rgba(55,178,77,.3)}
+.betbar{
+  text-align:center;color:#fff;font-weight:800;font-size:23px;
+  padding:15px;border-radius:12px;background:var(--blue);
+}
+.betbar.banker{background:var(--red)}
+.betbar.idle{background:var(--gray)}
+.subline{text-align:center;color:var(--gray-d);font-size:14px;margin-top:9px}
+.recbadge{
+  text-align:center;margin-top:10px;font-size:14px;font-weight:700;
+  color:#a8520a;background:#fff4e6;border:1.5px solid #ffd8a8;
+  border-radius:9px;padding:7px 10px;
+}
+
+/* stat grids */
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat{background:#fff;border:2px solid var(--card-border);border-radius:14px;padding:14px 10px;text-align:center}
+.stat .lab{font-size:13px;font-weight:700;letter-spacing:.4px;color:var(--gray-d);text-transform:none}
+.stat .val{font-size:27px;font-weight:800;margin-top:4px}
+.stat.pl .lab{color:var(--green)}
+.stat .val.pos{color:var(--green)}
+.stat .val.neg{color:var(--red)}
+.stat.rec{border-color:#ffd8a8;background:#fff9f0}
+
+/* dots */
+.dots-panel{padding:12px}
+.dots{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;min-height:14px}
+.dot{width:13px;height:13px;border-radius:50%}
+.dot.W{background:var(--green-b)}
+.dot.L{background:var(--red)}
+
+/* controls */
+.controls{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;justify-content:center}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:13px;font-weight:700;color:var(--gray-d)}
+.field input{
+  font-family:inherit;font-size:20px;font-weight:700;
+  width:120px;padding:9px 12px;border:2px solid var(--card-border);
+  border-radius:10px;color:var(--ink);text-align:center;
+}
+button{
+  font-family:inherit;cursor:pointer;color:#fff;font-weight:800;font-size:20px;
+  border:none;border-radius:12px;padding:13px 26px;transition:.12s;
+}
+button:active{transform:translateY(1px)}
+.b-bank{background:var(--red)}.b-bank:hover{background:var(--red-d)}
+.b-play{background:var(--blue)}.b-play:hover{background:var(--blue-d)}
+.b-undo{background:var(--gray);font-size:17px;padding:13px 18px}
+.b-reset{background:var(--green-b);font-size:17px;padding:13px 18px}
+.foot{text-align:center;color:var(--gray-d);font-size:12.5px;margin-top:4px}
+
+/* ---- golden bet highlight on board ---- */
+.bcol.gold{outline:3px solid var(--yellow);outline-offset:3px;border-radius:9px;background:rgba(247,201,72,.12)}
+.gold-badge{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:10px;font-size:15px;font-weight:800;color:#9a6a00;background:#fff7e0;border:1.5px solid var(--yellow);border-radius:10px;padding:9px 12px}
+
+/* ---- pattern stats ---- */
+.stats-section{display:flex;flex-direction:column;gap:14px}
+.sec-title{font-size:13px;font-weight:800;letter-spacing:.7px;color:var(--gray-d);text-transform:uppercase;text-align:center;margin-top:6px}
+.pstat-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:3px}
+.pstat-title{font-size:16px;font-weight:800}
+.pstat-rate{font-size:18px;font-weight:800;color:var(--blue);white-space:nowrap}
+.pstat-desc{font-size:12.5px;color:var(--gray-d);line-height:1.5;margin-bottom:12px}
+.ptiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ptile{background:var(--soft);border:2px solid var(--card-border);border-radius:12px;padding:11px 8px;text-align:center}
+.ptile .pl{font-size:12px;font-weight:700;color:var(--gray-d)}
+.ptile .pv{font-size:24px;font-weight:800;margin-top:2px}
+.ptile.win .pv{color:var(--green)}
+.subpair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:680px){.subpair{grid-template-columns:1fr}.ptiles{grid-template-columns:repeat(3,1fr)}}
+.subbox{border:2px solid var(--card-border);border-radius:13px;padding:12px}
+.subbox h4{font-size:14px;font-weight:800;margin-bottom:3px}
+.subbox .sd{font-size:11.5px;color:var(--gray-d);margin-bottom:10px;line-height:1.4}
+.hist{display:flex;gap:6px;align-items:flex-end;height:78px;margin-top:12px}
+.hbar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%}
+.hbar .hb{width:100%;background:var(--blue);border-radius:5px 5px 0 0;min-height:2px}
+.hbar.miss .hb{background:var(--gray)}
+.hbar .hn{font-size:11px;font-weight:700;color:var(--gray-d)}
+.hbar .hc{font-size:11px;font-weight:800}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="panel board-panel"><div class="board" id="board"></div></div>
+
+  <div class="panel">
+    <div class="next-title">Next 4 Bets</div>
+    <div class="next-chips" id="nextChips"></div>
+    <div class="betbar" id="betbar">Bet Now: —</div>
+    <div class="subline" id="subline"></div>
+    <div id="recwrap"></div>
+  </div>
+
+  <div class="grid4">
+    <div class="stat"><div class="lab">Wins</div><div class="val" id="wins">0</div></div>
+    <div class="stat"><div class="lab">Losses</div><div class="val" id="losses">0</div></div>
+    <div class="stat"><div class="lab">Hands</div><div class="val" id="hands">0</div></div>
+    <div class="stat pl"><div class="lab">Profit / Loss</div><div class="val" id="pnl">0.00</div></div>
+  </div>
+
+  <div class="panel dots-panel"><div class="dots" id="dots"></div></div>
+
+  <div class="grid3">
+    <div class="stat"><div class="lab">Current Bet</div><div class="val" id="curbet">1.00</div></div>
+    <div class="stat"><div class="lab">Bankroll</div><div class="val" id="bankroll">1000.00</div></div>
+    <div class="stat" id="basecard"><div class="lab">Active Base</div><div class="val" id="activebase">1.00</div></div>
+  </div>
+
+  <div class="panel controls">
+    <div class="field"><label>Base Bet</label><input id="base" type="number" min="0.01" step="0.5" value="1" oninput="setBase(this.value)"></div>
+    <div class="field"><label>Start Bankroll</label><input id="start" type="number" step="50" value="1000" oninput="setStart(this.value)"></div>
+    <button class="b-bank" onclick="add('B')">Banker</button>
+    <button class="b-play" onclick="add('P')">Player</button>
+    <button class="b-undo" onclick="undo()">Undo</button>
+    <button class="b-reset" onclick="resetAll()">Reset</button>
+  </div>
+
+  <div class="stats-section">
+    <div class="sec-title">— Pattern Statistics · Triggers vs Wins —</div>
+
+    <div class="panel">
+      <div class="pstat-head"><span class="pstat-title">1-2-X · single → pair, bet chop</span><span class="pstat-rate" id="rate1">—</span></div>
+      <div class="pstat-desc">A single then a pair of the other side (B&nbsp;PP / P&nbsp;BB). Bet the chop back — BPP→B, PBB→P — 1 bet. Win = the pair stays a pair (doesn't extend to 3+).</div>
+      <div class="ptiles" id="tiles1"></div>
+    </div>
+
+    <div class="panel">
+      <div class="pstat-head"><span class="pstat-title">2-1-1 &amp; 1-1 · chop → expected streak</span></div>
+      <div class="pstat-desc">Bet the chop (opposite of the last outcome) and watch the new streak. 2-1-1 (BB-P-B / PP-B-P) is the stronger signal; 1-1 (any two differing) fires far more often. Histograms show how long the streak ran — miss = chop never started.</div>
+      <div class="subpair">
+        <div class="subbox"><h4>2-1-1</h4><div class="sd">pair, single, single — then expect the opposite to streak</div><div class="ptiles" id="tiles211"></div><div class="hist" id="hist211"></div></div>
+        <div class="subbox"><h4>1-1</h4><div class="sd">just the last two differing — the broad chop</div><div class="ptiles" id="tiles11"></div><div class="hist" id="hist11"></div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="pstat-head"><span class="pstat-title">1-1-3-X · the favorite (2 bets)</span><span class="pstat-rate" id="rate3">—</span></div>
+      <div class="pstat-desc">1-1 then a 3-streak (BPBBB / PBPPP). Bet the chop on the 4th & 5th outcomes, stop on first win. Win = the streak breaks by the 5th; miss = it reaches 5 in a row.</div>
+      <div class="ptiles" id="tiles3"></div>
+    </div>
+
+    <div class="panel">
+      <div class="pstat-head"><span class="pstat-title">After 4 in a row</span><span class="pstat-rate" id="rate4">—</span></div>
+      <div class="pstat-desc">Every time a side hits 4 straight — does it extend to 5+ or stop at 4? Read it as continuation (extend) or reversal (stop), whichever way you'd bet it.</div>
+      <div class="ptiles" id="tiles4"></div>
+    </div>
+  </div>
+
+  <div class="foot">Board &amp; betting unchanged. Golden Bet = any column holding 3-in-a-row (high chance of repeating). Pattern stats below are observation-only (no stake applied yet). Ties skipped.</div>
+</div>
+
+<script>
+let inputs=[];
+let base=1;
+let startBank=1000;
+
+function setBase(v){const n=parseFloat(v);base=(isNaN(n)||n<=0)?1:n;render();}
+function setStart(v){const n=parseFloat(v);startBank=isNaN(n)?0:n;render();}
+function add(x){inputs.push(x);render();}
+function undo(){inputs.pop();render();}
+function resetAll(){if(confirm('Clear all hands?')){inputs=[];render();}}
+function fmt(n){return (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+function replay(){
+  const cols=[];let cur=[];let pattern=null;let won=false;
+  let mode='normal';
+  let lossStreak=0;            // normal-mode consecutive losses
+  let recBase=0,recLoss=0,deficit=0;
+  let pnl=0,wins=0,losses=0;
+  const recent=[];
+  function stake(){
+    return mode==='normal' ? base*Math.pow(2,lossStreak) : recBase*Math.pow(2,recLoss);
+  }
+  for(const x of inputs){
+    if(pattern===null){
+      if(x!=='T'){cur.push({side:x,win:false});
+        if(cur.length===4){cols.push(cur.slice());pattern=cur.map(o=>o.side);cur=[];won=false;}}
+      continue;
+    }
+    const pos=cur.length;
+    if(!won){
+      const pred=pattern[pos];
+      const s=stake();
+      if(x!=='T'){
+        if(x===pred){ // WIN
+          wins++;recent.push('W');pnl+=s;
+          if(mode==='normal'){lossStreak=0;}
+          else{deficit-=s;recLoss=0;if(deficit<=0.0000001){mode='normal';lossStreak=0;}}
+          won=true;
+          cur.push({side:x,win:true});
+        }else{ // LOSS
+          losses++;recent.push('L');pnl-=s;
+          if(mode==='normal'){
+            lossStreak++;
+            if(lossStreak>=4){
+              deficit=base*(Math.pow(2,lossStreak)-1); // 1+2+4+8 = 15 * base
+              recBase=deficit/3;
+              recLoss=0;mode='recovery';
+            }
+          }else{deficit+=s;recLoss++;}
+          cur.push({side:x,win:false});
+        }
+        if(cur.length===4){cols.push(cur.slice());pattern=cur.map(o=>o.side);cur=[];won=false;}
+      }
+      // tie => push, nothing happens
+    }else{ // free hand
+      if(x!=='T'){cur.push({side:x,win:false});
+        if(cur.length===4){cols.push(cur.slice());pattern=cur.map(o=>o.side);cur=[];won=false;}}
+    }
+  }
+  return {cols,cur,pattern,won,mode,lossStreak,recBase,recLoss,deficit,pnl,wins,losses,recent,
+          nextStake:stake(),activeBase:(mode==='normal'?base:recBase)};
+}
+
+function render(){
+  const st=replay();
+
+  // ---- board ----
+  const completed=st.cols.map(c=>c.slice());
+  const curIdx=completed.length;
+  const activePos=(st.pattern && !st.won)?st.cur.length:-1;
+  const curCol=[];for(let i=0;i<4;i++)curCol.push(st.cur[i]||null);
+  const show=[...completed,curCol];
+  const DISP=Math.max(18,show.length+1);
+  while(show.length<DISP)show.push([null,null,null,null]);
+  document.getElementById('board').innerHTML=show.map((col,ci)=>{
+    const cells=[];
+    for(let r=0;r<4;r++){
+      const o=col[r];
+      const act=(ci===curIdx&&r===activePos)?' active':'';
+      if(!o){cells.push(`<div class="cell empty${act}"></div>`);}
+      else{cells.push(`<div class="cell ${o.side}${act}">${o.side}${o.win?'<span class="tick">✓</span>':''}</div>`);}
+    }
+    const sd=col.map(o=>o?o.side:null);
+    const gold=(sd[0]&&sd[0]===sd[1]&&sd[1]===sd[2])||(sd[1]&&sd[1]===sd[2]&&sd[2]===sd[3]);
+    return `<div class="bcol${gold?' gold':''}">${cells.join('')}</div>`;
+  }).join('');
+
+  // ---- next bets + bet bar ----
+  const nc=document.getElementById('nextChips');
+  const bar=document.getElementById('betbar');
+  const sub=document.getElementById('subline');
+  const recwrap=document.getElementById('recwrap');
+  if(st.pattern===null){
+    nc.innerHTML=[0,1,2,3].map(()=>`<div class="nchip dim" style="background:#cfd8ea">·</div>`).join('');
+    bar.className='betbar idle';bar.textContent='Observe — building first column';
+    sub.textContent=`${st.cur.length} / 4 logged`;
+    recwrap.innerHTML='';
+  }else if(st.won){
+    nc.innerHTML=st.pattern.map(s=>`<div class="nchip ${s} dim">${s}</div>`).join('');
+    bar.className='betbar idle';bar.textContent='Free hand — column filling';
+    sub.textContent=`Column ${curIdx+1} — observe until 4 outcomes`;
+    recwrap.innerHTML='';
+  }else{
+    const pos=st.cur.length;const pred=st.pattern[pos];
+    nc.innerHTML=st.pattern.map((s,i)=>`<div class="nchip ${i===pos?'now':s}">${s}</div>`).join('');
+    bar.className='betbar '+(pred==='B'?'banker':'');
+    bar.textContent=`Bet Now: ${pred} — ${fmt(st.nextStake)}`;
+    sub.textContent=`Column ${curIdx+1}, hand ${pos+1} of 4 — match the hand beside it`;
+    recwrap.innerHTML = st.mode==='recovery'
+      ? `<div class="recbadge">↻ Recovery — 3-split base ${fmt(st.recBase)} · remaining to clear ${fmt(Math.max(0,st.deficit))}</div>`
+      : '';
+  }
+
+  // ---- stats ----
+  document.getElementById('wins').textContent=st.wins;
+  document.getElementById('losses').textContent=st.losses;
+  document.getElementById('hands').textContent=inputs.length;
+  const pl=document.getElementById('pnl');
+  pl.textContent=(st.pnl>=0?'':'-')+fmt(Math.abs(st.pnl));
+  pl.className='val '+(st.pnl>=0?'pos':'neg');
+
+  document.getElementById('curbet').textContent=fmt(st.nextStake);
+  document.getElementById('bankroll').textContent=fmt(startBank+st.pnl);
+  document.getElementById('activebase').textContent=fmt(st.activeBase);
+  document.getElementById('basecard').className='stat'+(st.mode==='recovery'?' rec':'');
+
+  // ---- dots ----
+  document.getElementById('dots').innerHTML=
+    st.recent.slice(-18).map(r=>`<div class="dot ${r}"></div>`).join('')
+    || '<span style="color:#aab2c5;font-size:13px">no bets resolved yet</span>';
+
+  renderStats();
+}
+
+function computePatternStats(){
+  const seq=inputs.filter(x=>x!=='T');
+  const runs=[];
+  for(const s of seq){ const last=runs[runs.length-1]; if(last&&last.side===s)last.len++; else runs.push({side:s,len:1}); }
+  const opp=s=>s==='B'?'P':'B';
+
+  // 1) 1-2-X : single then pair, bet chop (win = pair stays at 2)
+  let t1=0,w1=0;
+  for(let i=1;i<runs.length-1;i++){                 // completed runs only
+    if(runs[i-1].len===1 && runs[i].len>=2){ t1++; if(runs[i].len===2)w1++; }
+  }
+
+  // 2) 2-1-1 and 1-1 : bet chop (opposite of last), measure resulting streak length
+  const mk=()=>({t:0,w:0,hist:[0,0,0,0,0]});        // hist: [miss,1,2,3,4+]
+  const s211=mk(), s11=mk();
+  const streakAfter=(k,Y)=>{ let n=0,j=k+1; while(j<seq.length&&seq[j]===Y){n++;j++;} return n; };
+  for(let k=0;k<seq.length-1;k++){                   // need k+1 to resolve
+    const Y=opp(seq[k]);
+    if(k>=1 && seq[k-1]!==seq[k]){
+      const n=streakAfter(k,Y); s11.t++; if(n>=1)s11.w++; s11.hist[Math.min(n,4)]++;
+    }
+    if(k>=3 && seq[k-3]===seq[k-2] && seq[k-2]!==seq[k-1] && seq[k-1]!==seq[k]){
+      const n=streakAfter(k,Y); s211.t++; if(n>=1)s211.w++; s211.hist[Math.min(n,4)]++;
+    }
+  }
+
+  // 3) 1-1-3-X : 1-1 then 3-streak, 2 chop bets on 4th & 5th (win = breaks by 5th)
+  let t3=0,w3=0;
+  for(let i=2;i<runs.length-1;i++){
+    if(runs[i-2].len===1 && runs[i-1].len===1 && runs[i].len>=3){ t3++; if(runs[i].len<=4)w3++; }
+  }
+
+  // 4) after 4 in a row : extends to 5+ or stops at 4
+  let t4=0,ext4=0,stop4=0;
+  for(let i=0;i<runs.length-1;i++){
+    if(runs[i].len>=4){ t4++; if(runs[i].len>=5)ext4++; else stop4++; }
+  }
+
+  return {t1,w1,s211,s11,t3,w3,t4,ext4,stop4};
+}
+
+function renderStats(){
+  const s=computePatternStats();
+  const pct=(w,t)=>t?Math.round(w/t*100)+'%':'—';
+  const tiles=(id,arr)=>{document.getElementById(id).innerHTML=arr.map(p=>
+    `<div class="ptile ${p.win?'win':''}"><div class="pl">${p.l}</div><div class="pv">${p.v}</div></div>`).join('');};
+  const hist=(id,h)=>{
+    const labels=['miss','1','2','3','4+'], max=Math.max(1,...h);
+    document.getElementById(id).innerHTML=h.map((c,i)=>
+      `<div class="hbar ${i===0?'miss':''}"><div class="hc">${c}</div>`+
+      `<div class="hb" style="height:${Math.round(c/max*100)}%"></div><div class="hn">${labels[i]}</div></div>`).join('');
+  };
+
+  document.getElementById('rate1').textContent='Win '+pct(s.w1,s.t1);
+  tiles('tiles1',[{l:'Triggers',v:s.t1},{l:'Wins',v:s.w1,win:1},{l:'Win %',v:pct(s.w1,s.t1)}]);
+
+  tiles('tiles211',[{l:'Triggers',v:s.s211.t},{l:'Wins',v:s.s211.w,win:1},{l:'Win %',v:pct(s.s211.w,s.s211.t)}]);
+  hist('hist211',s.s211.hist);
+  tiles('tiles11',[{l:'Triggers',v:s.s11.t},{l:'Wins',v:s.s11.w,win:1},{l:'Win %',v:pct(s.s11.w,s.s11.t)}]);
+  hist('hist11',s.s11.hist);
+
+  document.getElementById('rate3').textContent='Win '+pct(s.w3,s.t3);
+  tiles('tiles3',[{l:'Triggers',v:s.t3},{l:'Wins',v:s.w3,win:1},{l:'Win %',v:pct(s.w3,s.t3)}]);
+
+  document.getElementById('rate4').textContent=s.t4?('Extend '+pct(s.ext4,s.t4)):'—';
+  tiles('tiles4',[{l:'4-in-row',v:s.t4},{l:'Extended 5+',v:s.ext4,win:1},{l:'Stopped at 4',v:s.stop4}]);
+}
+
+render();
+</script>
+</body>
+</html>
