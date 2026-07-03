@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baccarat Hit &amp; Run — Chop System</title>
+<style>
+:root{--ink:#16244a;--red:#e03131;--blue:#3b5bdb;--green:#2f9e44;--green-b:#37b24d;
+--gray:#868e96;--gray-d:#5c636a;--page:#dfe6f3;--card-border:#e2e8f5;--soft:#f4f7fc;--yellow:#f7c948;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Roboto,system-ui,-apple-system,sans-serif;background:var(--page);color:var(--ink);padding:22px 14px 50px}
+.app{max-width:960px;margin:0 auto;background:#fff;border:5px solid var(--ink);border-radius:22px;padding:14px;display:flex;flex-direction:column;gap:14px;box-shadow:0 18px 40px rgba(22,36,74,.22)}
+h1{font-size:22px;font-weight:800}.tag{color:var(--gray-d);font-size:13px;margin-top:-6px}
+.panel{background:#fff;border:2px solid var(--card-border);border-radius:16px;padding:16px}
+.panel.soft{background:var(--soft)}
+.inputs{display:flex;gap:14px;flex-wrap:wrap;align-items:end}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:12px;font-weight:700;color:var(--gray-d)}
+.field input{font-family:inherit;font-size:18px;font-weight:700;width:110px;padding:9px 11px;border:2px solid var(--card-border);border-radius:10px;color:var(--ink);text-align:center}
+.field input.sm{width:78px}
+.betbar{text-align:center;color:#fff;font-weight:800;font-size:26px;padding:17px;border-radius:13px;background:var(--gray)}
+.betbar.P{background:var(--blue)}.betbar.B{background:var(--red)}.betbar.wait{background:var(--gray)}.betbar.frozen{background:var(--green-b)}
+.betsub{text-align:center;color:var(--gray-d);font-size:14px;margin-top:9px;font-weight:600}
+.seqrow{display:flex;justify-content:center;gap:9px;margin-top:14px;flex-wrap:wrap}
+.sbet{border:2px solid var(--card-border);border-radius:11px;padding:9px 4px;text-align:center;width:74px;background:#fbfcfe}
+.sbet.on{border-color:var(--yellow);background:#fff9ec;box-shadow:0 0 0 2px rgba(247,201,72,.3)}
+.sbet.done{border-color:var(--green-b);background:#eaf7ee}
+.sbet .sn{font-size:11px;font-weight:700;color:var(--gray-d)}.sbet .su{font-size:19px;font-weight:800;margin-top:1px}
+.prog{margin-top:14px}
+.prog-track{background:#eef2fa;border-radius:9px;height:20px;overflow:hidden}
+.prog-fill{height:100%;background:var(--green-b);border-radius:9px;transition:width .2s}
+.prog-fill.neg{background:var(--red)}
+.prog-lab{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--gray-d);margin-bottom:6px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:640px){.grid4{grid-template-columns:repeat(2,1fr)}}
+.stat{background:#fff;border:2px solid var(--card-border);border-radius:14px;padding:13px 10px;text-align:center}
+.stat .lab{font-size:12px;font-weight:700;color:var(--gray-d)}
+.stat .val{font-size:23px;font-weight:800;margin-top:3px}
+.stat .val.pos{color:var(--green)}.stat .val.neg{color:var(--red)}
+.board-panel{overflow-x:auto}
+.board{display:flex;gap:5px;min-height:182px}
+.bcol{display:flex;flex-direction:column;gap:5px}
+.bcol.gold{outline:3px solid var(--yellow);outline-offset:3px;border-radius:9px;background:rgba(247,201,72,.12)}
+.cell{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;color:#fff;position:relative}
+.cell.B{background:var(--red)}.cell.P{background:var(--blue)}.cell.empty{background:#fff;border:1.5px solid #d7e0f1}
+.cell .bm{position:absolute;top:2px;right:3px;width:9px;height:9px;border-radius:50%}
+.cell .bm.w{background:#b6f0c4;box-shadow:0 0 0 1.5px #2f9e44}
+.cell .bm.l{background:#ffc9c9;box-shadow:0 0 0 1.5px #e03131}
+.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center}
+button{font-family:inherit;cursor:pointer;color:#fff;font-weight:800;font-size:19px;border:none;border-radius:12px;padding:13px 26px;transition:.12s}
+button:active{transform:translateY(1px)}button:disabled{opacity:.4;cursor:not-allowed}
+.b-bank{background:var(--red)}.b-play{background:var(--blue)}.b-tie{background:var(--green)}
+.b-undo{background:var(--gray);font-size:15px;padding:13px 17px}.b-new{background:var(--ink);font-size:15px;padding:13px 17px}.b-reset{background:var(--gray-d);font-size:15px;padding:13px 17px}
+.sectitle{font-size:13px;font-weight:800;letter-spacing:.6px;color:var(--gray-d);text-transform:uppercase;text-align:center}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.cmp{grid-template-columns:1fr}}
+.cmp .box{border:2px solid var(--card-border);border-radius:13px;padding:13px;text-align:center}
+.cmp .box h4{font-size:14px;font-weight:800;margin-bottom:2px}
+.cmp .box .big{font-size:28px;font-weight:800;color:var(--blue);margin:4px 0}
+.cmp .box .sd{font-size:12px;color:var(--gray-d);line-height:1.4}
+.foot{font-size:12px;color:var(--gray-d);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="app">
+  <div>
+    <h1>Baccarat · Hit &amp; Run Chop System</h1>
+    <div class="tag">Chop plan 1·½·1·2 · 1-1-3 break (2 bets, double) · target +4.5u then freeze.</div>
+  </div>
+
+  <div class="panel soft">
+    <div class="inputs">
+      <div class="field"><label>Balance</label><input id="bal" type="number" step="10" value="500" oninput="save();render()"></div>
+      <div class="field"><label>Unit size</label><input id="unit" type="number" step="1" value="10" class="sm" oninput="save();render()"></div>
+      <div class="field"><label>Currency</label><input id="cur" type="text" value="kr" class="sm" oninput="save();render()"></div>
+      <div class="field"><label>Target (u)</label><input id="tgt" type="number" step="0.5" value="4.5" class="sm" oninput="save();render()"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="betbar wait" id="betbar">—</div>
+    <div class="betsub" id="betsub"></div>
+    <div class="seqrow" id="seqrow"></div>
+    <div class="prog">
+      <div class="prog-lab"><span id="progL">Shoe P/L</span><span id="progR"></span></div>
+      <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="grid4">
+    <div class="stat"><div class="lab">Shoe P/L (u)</div><div class="val" id="sPnl">0.0</div></div>
+    <div class="stat"><div class="lab">Balance</div><div class="val" id="sBal">—</div></div>
+    <div class="stat"><div class="lab">Base now</div><div class="val" id="sBase">1</div></div>
+    <div class="stat"><div class="lab">Hands (shoe)</div><div class="val" id="sHands">0</div></div>
+  </div>
+
+  <div class="panel board-panel"><div class="board" id="board"></div></div>
+
+  <div class="panel controls">
+    <button class="b-bank" id="btnB" onclick="add('B')">Banker</button>
+    <button class="b-play" id="btnP" onclick="add('P')">Player</button>
+    <button class="b-tie" id="btnT" onclick="add('T')">Tie</button>
+    <button class="b-undo" onclick="undo()">Undo</button>
+    <button class="b-new" onclick="newShoe()">New Shoe</button>
+    <button class="b-reset" onclick="resetAll()">Reset All</button>
+  </div>
+
+  <div class="panel">
+    <div class="sectitle" style="margin-bottom:12px">System stats (all shoes)</div>
+    <div class="grid4">
+      <div class="stat"><div class="lab">Chop plays</div><div class="val" id="stChop">0</div></div>
+      <div class="stat"><div class="lab">Chop bet-1 win %</div><div class="val" id="stChopW">—</div></div>
+      <div class="stat"><div class="lab">Chop 4/4</div><div class="val" id="stChopF">0</div></div>
+      <div class="stat"><div class="lab">Max base hit</div><div class="val" id="stBase">1</div></div>
+    </div>
+    <div class="grid4" style="margin-top:12px">
+      <div class="stat"><div class="lab">1-1-3 plays</div><div class="val" id="st113">0</div></div>
+      <div class="stat"><div class="lab">1-1-3 win %</div><div class="val" id="st113W">—</div></div>
+      <div class="stat"><div class="lab">Shoes won</div><div class="val" id="stShoes">0 / 0</div></div>
+      <div class="stat"><div class="lab">Total P/L</div><div class="val" id="stPnl">0.0</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="sectitle" style="margin-bottom:12px">Signal check · 3-streak vs plain repeat</div>
+    <div class="cmp">
+      <div class="box"><h4>3-streak → 4th repeats</h4><div class="big" id="c3">—</div><div class="sd" id="c3d">after 3 in a row, does it go 4?</div></div>
+      <div class="box"><h4>Plain repeat (every hand)</h4><div class="big" id="cr">—</div><div class="sd" id="crd">baseline: does a hand repeat the last?</div></div>
+    </div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const KEY='baccaratLive_v2';
+let events=[];
+function getN(id,d){const v=parseFloat(document.getElementById(id).value);return isNaN(v)?d:v;}
+function add(o){if(sim().frozen)return;events.push({o});save();render();}
+function undo(){events.pop();save();render();}
+function newShoe(){events.push({shoe:true});save();render();}
+function resetAll(){if(confirm('Clear all shoes and stats?')){events=[];save();render();}}
+function fmt(n,d=1){return (Math.round(n*Math.pow(10,d))/Math.pow(10,d)).toFixed(d);}
+function stakeLbl(u){return u===0.5?'½u':u+'u';}
+
+function sim(){
+  const opp=s=>s==='B'?'P':'B';
+  const target=getN('tgt',4.5);
+  let totalPnl=0, shoePnl=0, base=1, armed=null, frozen=false;   // armed={kind:'chop'|'113',betNo}
+  let seq=[], betMap={};
+  const st={chop:0,chopW1:0,chopL1:0,chopFull:0, n113:0,w113:0,l113:0, maxBase:1, shoes:0,shoesWon:0};
+  let s3t=0,s3w=0,rpt=0,rpw=0;
+
+  function endShoe(){ if(seq.length){st.shoes++; if(frozen)st.shoesWon++;} totalPnl+=shoePnl;
+    shoePnl=0;base=1;armed=null;frozen=false;seq=[];betMap={}; }
+
+  for(const ev of events){
+    if(ev.shoe){endShoe();continue;}
+    if(ev.o==='T')continue;                            // tie push
+    const o=ev.o, idx=seq.length;
+
+    if(idx>=1){rpt++; if(o===seq[idx-1])rpw++;}
+    if(idx>=3 && seq[idx-1]===seq[idx-2] && seq[idx-2]===seq[idx-3]){s3t++; if(o===seq[idx-1])s3w++;}
+
+    if(armed && !frozen){
+      const predicted=opp(seq[idx-1]);
+      const stakeU = armed.kind==='chop'
+        ? (armed.betNo===1?base : armed.betNo===2?0.5 : armed.betNo===3?1 : 2)
+        : (armed.betNo===1?base : base*2);
+      const win=(o===predicted);
+      betMap[idx]={win,side:predicted,betNo:armed.betNo,kind:armed.kind};
+      if(win){
+        shoePnl+=stakeU;
+        if(armed.kind==='chop'){
+          if(armed.betNo===1)st.chopW1++;
+          if(armed.betNo===4){st.chopFull++;armed=null;}
+          else armed={kind:'chop',betNo:armed.betNo+1};
+        }else{ st.w113++; armed=null; }          // 1-1-3 win -> stop
+      }else{
+        shoePnl-=stakeU;
+        if(armed.kind==='chop'){
+          if(armed.betNo===1)st.chopL1++;
+          armed=null;                            // chop loss -> stop, base untouched
+        }else{
+          if(armed.betNo===1){ armed={kind:'113',betNo:2}; }   // double for 2nd try
+          else { st.l113++; armed=null; base*=2; if(base>st.maxBase)st.maxBase=base; }  // both missed -> double base
+        }
+      }
+      if(!armed && shoePnl>=0) base=1;           // in profit -> reset base
+      if(shoePnl>=target){frozen=true;armed=null;}
+    }
+
+    seq.push(o);
+
+    if(!armed && !frozen){
+      const i=seq.length-1;
+      if(i>=1 && seq[i]!==seq[i-1]){ armed={kind:'chop',betNo:1}; st.chop++; }   // after a chop
+      else if(i>=4 && seq[i]===seq[i-1] && seq[i-1]===seq[i-2]                    // 1-1-3
+              && seq[i-3]!==seq[i] && seq[i-4]===seq[i] && (i<5||seq[i-5]!==seq[i])){
+        armed={kind:'113',betNo:1}; st.n113++;
+      }
+    }
+  }
+
+  let next;
+  if(frozen) next={type:'frozen'};
+  else if(armed){
+    const last=seq[seq.length-1];
+    const stakeU = armed.kind==='chop'
+      ? (armed.betNo===1?base : armed.betNo===2?0.5 : armed.betNo===3?1 : 2)
+      : (armed.betNo===1?base : base*2);
+    next={type:'bet',kind:armed.kind,side:opp(last),betNo:armed.betNo,stakeU,base};
+  }else next={type:'wait'};
+
+  return {seq,betMap,shoePnl,totalPnl,base,frozen,target,next,st,sig3:{t:s3t,w:s3w},rep:{t:rpt,w:rpw}};
+}
+
+function render(){
+  const s=sim(), unit=getN('unit',10), cur=document.getElementById('cur').value||'', startBal=getN('bal',0);
+  const overall=s.totalPnl+s.shoePnl;
+
+  const bb=document.getElementById('betbar'), sub=document.getElementById('betsub');
+  if(s.next.type==='frozen'){
+    bb.className='betbar frozen'; bb.textContent='★ TARGET HIT  +'+fmt(s.shoePnl)+'u';
+    sub.textContent='Shoe locked — New Shoe to continue. Discipline. :)';
+  }else if(s.next.type==='wait'){
+    bb.className='betbar wait'; bb.textContent='WAIT';
+    sub.textContent='No trigger — need a chop (BP / PB) or a 1-1-3 (BPBBB / PBPPP).';
+  }else{
+    const n=s.next, name=n.side==='B'?'BANKER':'PLAYER';
+    bb.className='betbar '+n.side;
+    bb.textContent='BET '+name+' — '+fmt(n.stakeU,n.stakeU%1?1:0)+'u ('+fmt(n.stakeU*unit,0)+cur+')';
+    sub.textContent = n.kind==='chop'
+      ? ('Chop · bet '+n.betNo+' of 4 · base '+n.base+'u')
+      : ('1-1-3 break · bet '+n.betNo+' of 2'+(n.betNo===2?' (doubled)':'')+' · base '+n.base+'u');
+  }
+
+  // sequence chips
+  const inBet=s.next.type==='bet';
+  let chips;
+  if(inBet && s.next.kind==='113'){
+    chips=[{n:'Bet 1',u:s.base},{n:'Bet 2',u:s.base*2}].map((c,i)=>{
+      const bn=i+1,on=bn===s.next.betNo,done=s.next.betNo>bn;
+      return '<div class="sbet'+(on?' on':'')+(done?' done':'')+'"><div class="sn">'+c.n+'</div><div class="su">'+c.u+'u</div></div>';
+    }).join('');
+  }else{
+    const plan=[s.base,0.5,1,2];
+    chips=[1,2,3,4].map(b=>{
+      const on=inBet&&s.next.kind==='chop'&&b===s.next.betNo, done=inBet&&s.next.kind==='chop'&&s.next.betNo>b;
+      return '<div class="sbet'+(on?' on':'')+(done?' done':'')+'"><div class="sn">Bet '+b+'</div><div class="su">'+stakeLbl(plan[b-1])+'</div></div>';
+    }).join('');
+  }
+  document.getElementById('seqrow').innerHTML=chips;
+
+  const pct=Math.max(0,Math.min(100,(s.shoePnl<0?-s.shoePnl:s.shoePnl)/s.target*100));
+  const pf=document.getElementById('progFill');
+  pf.style.width=pct+'%'; pf.className='prog-fill'+(s.shoePnl<0?' neg':'');
+  document.getElementById('progL').textContent='Shoe P/L '+(s.shoePnl>=0?'+':'')+fmt(s.shoePnl)+'u';
+  document.getElementById('progR').textContent='target +'+fmt(s.target)+'u';
+
+  const sp=document.getElementById('sPnl');
+  sp.textContent=(s.shoePnl>=0?'+':'')+fmt(s.shoePnl); sp.className='val '+(s.shoePnl>=0?'pos':'neg');
+  document.getElementById('sBal').textContent=fmt(startBal+overall*unit,0)+cur;
+  document.getElementById('sBase').textContent=s.base+'u';
+  document.getElementById('sHands').textContent=s.seq.length;
+
+  const cols=[]; for(let k=0;k<s.seq.length;k++){ if(k%4===0)cols.push([]); cols[cols.length-1].push({side:s.seq[k],idx:k}); }
+  const DISP=Math.max(16,cols.length+1);
+  const show=cols.map(c=>c.slice()); while(show.length<DISP)show.push([]);
+  document.getElementById('board').innerHTML=show.map(col=>{
+    const cells=[];
+    for(let r=0;r<4;r++){
+      const c=col[r];
+      if(!c){cells.push('<div class="cell empty"></div>');continue;}
+      const bm=s.betMap[c.idx];
+      cells.push('<div class="cell '+c.side+'">'+c.side+(bm?'<span class="bm '+(bm.win?'w':'l')+'"></span>':'')+'</div>');
+    }
+    const sd=col.map(c=>c?c.side:null);
+    const gold=(sd[0]&&sd[0]===sd[1]&&sd[1]===sd[2])||(sd[1]&&sd[1]===sd[2]&&sd[2]===sd[3]);
+    return '<div class="bcol'+(gold?' gold':'')+'">'+cells.join('')+'</div>';
+  }).join('');
+
+  ['btnB','btnP','btnT'].forEach(id=>document.getElementById(id).disabled=s.frozen);
+
+  const st=s.st, pf2=(w,t)=>t?Math.round(w/t*100)+'%':'—';
+  document.getElementById('stChop').textContent=st.chop;
+  document.getElementById('stChopW').textContent=pf2(st.chopW1,st.chopW1+st.chopL1);
+  document.getElementById('stChopF').textContent=st.chopFull;
+  document.getElementById('stBase').textContent=st.maxBase+'u';
+  document.getElementById('st113').textContent=st.n113;
+  document.getElementById('st113W').textContent=pf2(st.w113,st.w113+st.l113);
+  document.getElementById('stShoes').textContent=st.shoesWon+' / '+st.shoes;
+  const tp=document.getElementById('stPnl');
+  tp.textContent=(overall>=0?'+':'')+fmt(overall)+'u'; tp.className='val '+(overall>=0?'pos':'neg');
+
+  document.getElementById('c3').textContent=pf2(s.sig3.w,s.sig3.t);
+  document.getElementById('c3d').textContent=s.sig3.t+' triggers · 4th repeated '+s.sig3.w+'x';
+  document.getElementById('cr').textContent=pf2(s.rep.w,s.rep.t);
+  document.getElementById('crd').textContent=s.rep.t+' hands · repeated '+s.rep.w+'x';
+
+  document.getElementById('foot').innerHTML=
+    'Chop: enter after BP/PB, bet the alternation on 1·½·1·2, win→continue / loss→stop. '+
+    '1-1-3 (BPBBB / PBPPP): bet the break, 2 bets max, 2nd is doubled, stop on first win. '+
+    'Base = Bet-1 stake, doubles only on a lost 1-1-3, resets to 1 when the shoe is back in profit. '+
+    'Ties push. Shoe freezes at +'+fmt(s.target)+'u. Board dots: green win / red loss.';
+}
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify({events,
+  bal:document.getElementById('bal').value,unit:document.getElementById('unit').value,
+  cur:document.getElementById('cur').value,tgt:document.getElementById('tgt').value}));}catch(e){}}
+try{const d=JSON.parse(localStorage.getItem(KEY));if(d){events=d.events||[];
+  if(d.bal!=null)document.getElementById('bal').value=d.bal;
+  if(d.unit!=null)document.getElementById('unit').value=d.unit;
+  if(d.cur!=null)document.getElementById('cur').value=d.cur;
+  if(d.tgt!=null)document.getElementById('tgt').value=d.tgt;}}catch(e){}
+render();
+</script>
+</body>
+</html>
