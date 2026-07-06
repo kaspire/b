@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baccarat 1-1-2 Research Board</title>
+<style>
+:root{--ink:#16244a;--red:#e03131;--blue:#3b5bdb;--green:#2f9e44;--green-b:#37b24d;--tie:#12b886;
+--gray:#868e96;--gray-d:#5c636a;--page:#dfe6f3;--card-border:#e2e8f5;--soft:#f4f7fc;--yellow:#f7c948;--violet:#7048e8;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Roboto,system-ui,-apple-system,sans-serif;background:var(--page);color:var(--ink);padding:22px 14px 50px}
+.app{max-width:1000px;margin:0 auto;background:#fff;border:5px solid var(--ink);border-radius:22px;padding:14px;display:flex;flex-direction:column;gap:14px;box-shadow:0 18px 40px rgba(22,36,74,.22)}
+h1{font-size:22px;font-weight:800}.tag{color:var(--gray-d);font-size:13px;margin-top:-6px}
+.panel{background:#fff;border:2px solid var(--card-border);border-radius:16px;padding:16px}
+.panel.soft{background:var(--soft)}
+.sectitle{font-size:12px;font-weight:800;letter-spacing:.6px;color:var(--gray-d);text-transform:uppercase;margin-bottom:12px}
+.inputs{display:flex;gap:14px;flex-wrap:wrap;align-items:end}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:12px;font-weight:700;color:var(--gray-d)}
+.field input{font-family:inherit;font-size:17px;font-weight:700;width:96px;padding:8px 10px;border:2px solid var(--card-border);border-radius:10px;color:var(--ink);text-align:center}
+.field input.sm{width:70px}
+.betbar{text-align:center;color:#fff;font-weight:800;font-size:25px;padding:16px;border-radius:13px;background:var(--gray)}
+.betbar.P{background:var(--blue)}.betbar.B{background:var(--red)}.betbar.wait{background:var(--gray)}
+.betsub{text-align:center;color:var(--gray-d);font-size:13.5px;margin-top:8px;font-weight:600}
+.road-panel{overflow-x:auto}
+.road{display:flex;gap:3px;min-height:150px}
+.rcol{display:flex;flex-direction:column;gap:3px}
+.rcell{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;position:relative;border:2px solid transparent}
+.rcell.B{background:var(--red)}.rcell.P{background:var(--blue)}
+.rcell.sig{border-color:var(--yellow);box-shadow:0 0 0 2px rgba(247,201,72,.4)}
+.rcell .tie{position:absolute;inset:0;pointer-events:none}
+.rcell .tie svg{width:100%;height:100%}
+.rcell .tn{position:absolute;bottom:-3px;right:-3px;font-size:9px;font-weight:800;color:var(--tie);background:#fff;border-radius:6px;padding:0 2px}
+.rcell .rm{position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%}
+.rm.w{background:#b6f0c4;box-shadow:0 0 0 1.5px #2f9e44}.rm.l{background:#ffc9c9;box-shadow:0 0 0 1.5px #e03131}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:660px){.grid4{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.grid3{grid-template-columns:1fr}}
+.stat{background:#fff;border:2px solid var(--card-border);border-radius:13px;padding:12px 8px;text-align:center}
+.stat.hl{border-color:var(--yellow);background:#fffdf5}
+.stat .lab{font-size:11.5px;font-weight:700;color:var(--gray-d)}
+.stat .val{font-size:22px;font-weight:800;margin-top:3px}
+.stat .val.pos{color:var(--green)}.stat .val.neg{color:var(--red)}
+.hist{display:flex;gap:4px;align-items:flex-end;height:74px;margin-top:6px}
+.hbar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;height:100%}
+.hbar .hb{width:100%;border-radius:4px 4px 0 0;min-height:2px;background:var(--blue)}
+.hbar .hb.g{background:var(--green-b)}.hbar .hb.gr{background:var(--gray)}
+.hbar .hn{font-size:9.5px;font-weight:700;color:var(--gray-d)}.hbar .hc{font-size:9.5px;font-weight:800}
+.rows{font-size:13px}.rows .r{display:flex;justify-content:space-between;padding:5px 2px;border-bottom:1px solid var(--card-border)}
+.rows .r b{font-weight:800}
+.tag2{color:var(--gray-d);font-size:11.5px;margin:-6px 0 10px;line-height:1.4}
+.controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+button{font-family:inherit;cursor:pointer;color:#fff;font-weight:800;font-size:18px;border:none;border-radius:12px;padding:12px 22px;transition:.12s}
+button:active{transform:translateY(1px)}button:disabled{opacity:.4}
+.b-bank{background:var(--red)}.b-play{background:var(--blue)}.b-tie{background:var(--tie)}
+.b-undo{background:var(--gray);font-size:14px;padding:12px 15px}.b-new{background:var(--ink);font-size:14px;padding:12px 15px}
+.b-mult{background:var(--violet);font-size:14px;padding:12px 15px}.b-csv{background:var(--green);font-size:14px;padding:12px 15px}.b-reset{background:var(--gray-d);font-size:14px;padding:12px 15px}
+.best{font-size:13px;line-height:1.7}.best b{color:var(--ink)}
+.foot{font-size:11.5px;color:var(--gray-d);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="app">
+  <div>
+    <h1>Baccarat · 1-1-2 Research Board</h1>
+    <div class="tag">Signal = two singles then a pair (BPBB / PBPP) → bet the reversal, 1 bet &amp; out. Everything else is logged.</div>
+  </div>
+
+  <div class="panel soft"><div class="inputs">
+    <div class="field"><label>Balance</label><input id="bal" type="number" step="10" value="500" oninput="save();render()"></div>
+    <div class="field"><label>Unit</label><input id="unit" type="number" step="1" value="20" class="sm" oninput="save();render()"></div>
+    <div class="field"><label>Currency</label><input id="cur" type="text" value="kr" class="sm" oninput="save();render()"></div>
+  </div></div>
+
+  <div class="panel">
+    <div class="betbar wait" id="betbar">—</div>
+    <div class="betsub" id="betsub"></div>
+  </div>
+
+  <div class="panel road-panel"><div class="road" id="road"></div></div>
+
+  <div class="panel controls">
+    <button class="b-bank" onclick="add('B')">Banker</button>
+    <button class="b-play" onclick="add('P')">Player</button>
+    <button class="b-tie" onclick="add('T')">Tie</button>
+    <button class="b-undo" onclick="undo()">Undo</button>
+    <button class="b-new" onclick="newShoe()">New Shoe</button>
+    <button class="b-mult" id="btnMult" onclick="markMult()">Mark last win ×</button>
+    <button class="b-csv" onclick="exportCSV()">Export CSV</button>
+    <button class="b-reset" onclick="resetAll()">Reset All</button>
+  </div>
+
+  <div class="panel">
+    <div class="sectitle">1st bet — the core (key data)</div>
+    <div class="grid4">
+      <div class="stat"><div class="lab">Signals W - L</div><div class="val" id="cWL">0-0</div></div>
+      <div class="stat"><div class="lab">Win %</div><div class="val" id="cWin">—</div></div>
+      <div class="stat hl"><div class="lab">Max WIN before loss</div><div class="val" id="cMaxW">0</div></div>
+      <div class="stat hl"><div class="lab">Max LOSS gap before win</div><div class="val" id="cMaxL">0</div></div>
+    </div>
+    <div class="grid3" style="margin-top:11px">
+      <div class="stat"><div class="lab">Flat (1 &amp; out) net</div><div class="val" id="cFlat">0</div></div>
+      <div class="stat"><div class="lab">Plan 1·½·1·2 net</div><div class="val" id="cPlan">0</div></div>
+      <div class="stat"><div class="lab">Current streak</div><div class="val" id="cStreak">—</div></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="sectitle">Stat 2 · after a LOSS, next 3 (S=streak / O=opposite)</div>
+      <div class="tag2">What happens over the next 3 hands once the pair trends on — top sequences.</div>
+      <div class="rows" id="next3"></div>
+    </div>
+    <div class="panel">
+      <div class="sectitle">Tie mixed vs clean pattern</div>
+      <div class="tag2">Does a tie inside the BPBB / PBPP change the 1st-bet win rate?</div>
+      <div class="rows" id="tieMix"></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="sectitle">Win position in shoe</div>
+      <div class="hist" id="posHist"></div>
+      <div class="tag2" id="posSub" style="margin-top:8px;margin-bottom:0"></div>
+    </div>
+    <div class="panel">
+      <div class="sectitle">Run-length spread + chop edge</div>
+      <div class="hist" id="runHist"></div>
+      <div class="rows" id="chopRows" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="sectitle">Lead &amp; ties at resolution</div>
+      <div class="rows" id="leadRows"></div>
+    </div>
+    <div class="panel">
+      <div class="sectitle">Wins by hour (local clock) + multiplier</div>
+      <div class="hist" id="hourHist"></div>
+      <div class="rows" id="multRows" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="sectitle">What performed best</div>
+    <div class="best" id="best"></div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const KEY='baccaratResearch_v1';
+let events=[];
+function getN(id,d){const v=parseFloat(document.getElementById(id).value);return isNaN(v)?d:v;}
+function add(o){events.push({o,t:Date.now()});save();render();}
+function undo(){events.pop();save();render();}
+function newShoe(){events.push({shoe:true});save();render();}
+function resetAll(){if(confirm('Clear all shoes and stats?')){events=[];save();render();}}
+function markMult(){const i=sim().lastWinEv;if(i>=0){events[i].mult=!events[i].mult;save();render();}}
+function fmt(n,d=1){return (Math.round(n*Math.pow(10,d))/Math.pow(10,d)).toFixed(d);}
+const opp=s=>s==='B'?'P':'B';
+const PLAN=[1,0.5,1,2];
+
+function sim(){
+  // cumulative
+  const S={fw:0,fl:0,maxW:0,maxL:0,curW:0,curL:0,flat:0,plan:0,planPos:0,
+    n3:{},tieW:0,tieL:0,clnW:0,clnL:0,
+    pos:{s:{w:0,l:0},m:{w:0,l:0},e:{w:0,l:0}},
+    runHist:new Array(7).fill(0),
+    chop:{cw:0,cl:0,tw:0,tl:0},
+    lead:{B:{w:0,l:0},P:{w:0,l:0},E:{w:0,l:0}},tiesAtW:0,tiesAtL:0,
+    hour:new Array(24).fill(0),mult:0,
+    signals:[]};
+  let lastWinEv=-1, shoeCount=0;
+
+  // per shoe
+  let runs=[], road=[], seq=[], tbArr=[], pendingTies=0, armed=null, rec=null;
+  let handCount=0,bCount=0,pCount=0,tieCount=0, shoeSingles=0,shoeRuns=0, patternTieFlag=false;
+  let curCell=null; // last road cell for tie marks
+
+  function recordRun(len){ S.runHist[Math.min(len,7)-1]++; shoeRuns++; if(len===1)shoeSingles++; }
+  function endShoe(){
+    if(runs.length){ recordRun(runs[runs.length-1].len); }
+    if(handCount)shoeCount++;
+    runs=[];road=[];seq=[];tbArr=[];pendingTies=0;armed=null;rec=null;
+    handCount=bCount=pCount=tieCount=0;shoeSingles=shoeRuns=0;patternTieFlag=false;curCell=null;
+  }
+
+  events.forEach((ev,ei)=>{
+    if(ev.shoe){endShoe();return;}
+    handCount++;
+    if(ev.o==='T'){ tieCount++; pendingTies++; if(curCell)curCell.ties++; if(armed)armed.tie=true; return; }
+    const o=ev.o;
+    if(o==='B')bCount++; else pCount++;
+
+    // resolve armed bet
+    if(armed){
+      const win=(o===armed.betSide);
+      const posB= handCount<=25?'s':handCount<=50?'m':'e';
+      const choppy=(shoeRuns>0)&&(shoeSingles/shoeRuns>0.5);
+      const ld= bCount>pCount?'B':pCount>bCount?'P':'E';
+      const hr=new Date(ev.t||Date.now()).getHours();
+      const rslt=win?'W':'L';
+      if(win){
+        S.fw++; S.curW++; S.curL=0; if(S.curW>S.maxW)S.maxW=S.curW;
+        S.flat+=1; S.plan+=PLAN[Math.min(S.planPos,3)]; S.planPos=Math.min(S.planPos+1,7); if(S.planPos>3)S.planPos=0;
+        if(armed.tie)S.tieW++;else S.clnW++;
+        S.pos[posB].w++; if(choppy)S.chop.cw++;else S.chop.tw++;
+        S.lead[ld].w++; S.tiesAtW+=tieCount; S.hour[hr]++;
+        if(ev.mult)S.mult++;
+        lastWinEv=ei;
+      }else{
+        S.fl++; S.curL++; S.curW=0; if(S.curL>S.maxL)S.maxL=S.curL;
+        S.flat-=1; S.plan-=PLAN[Math.min(S.planPos,3)]; S.planPos=0;
+        if(armed.tie)S.tieL++;else S.clnL++;
+        S.pos[posB].l++; if(choppy)S.chop.cl++;else S.chop.tl++;
+        S.lead[ld].l++; S.tiesAtL+=tieCount;
+        rec={streak:armed.pairSide,buf:[]};   // start recording next-3
+      }
+      S.signals.push({shoe:shoeCount+1,hand:handCount,pairSide:armed.pairSide,betSide:armed.betSide,
+        result:rslt,tie:armed.tie?1:0,lead:ld,B:bCount,P:pCount,T:tieCount,choppy:choppy?1:0,hour:hr,mult:ev.mult?1:0});
+      armed=null;
+    } else if(rec){
+      rec.buf.push(o===rec.streak?'S':'O');
+      if(rec.buf.length===3){ const k=rec.buf.join(''); S.n3[k]=(S.n3[k]||0)+1; rec=null; }
+    }
+
+    // update runs + road
+    if(runs.length && runs[runs.length-1].side===o){ runs[runs.length-1].len++; road[road.length-1].push({side:o,ties:0}); }
+    else { if(runs.length)recordRun(runs[runs.length-1].len); runs.push({side:o,len:1}); road.push([{side:o,ties:0}]); }
+    curCell=road[road.length-1][road[road.length-1].length-1];
+    seq.push(o); tbArr.push(pendingTies); pendingTies=0;
+
+    // signal: current run hit 2, prior two runs are singles
+    const n=runs.length, cur=runs[n-1];
+    if(cur.len===2 && n>=3 && runs[n-2].len===1 && runs[n-3].len===1){
+      const si=tbArr.length-1;
+      const tm=(tbArr[si]>0)||(si>=1&&tbArr[si-1]>0)||(si>=2&&tbArr[si-2]>0);
+      armed={betSide:opp(cur.side),pairSide:cur.side,tie:tm};
+      curCell.sig=true;
+    }
+  });
+
+  return {S,runs,road,armed,lastWinEv,shoeCount,handCount,bCount,pCount,tieCount,shoeSingles,shoeRuns};
+}
+
+function render(){
+  const r=sim(), S=r.S, unit=getN('unit',20), cur=document.getElementById('cur').value||'', bal=getN('bal',0);
+  const overall=S.flat; // flat units
+
+  // bet bar
+  const bb=document.getElementById('betbar'), sub=document.getElementById('betsub');
+  if(r.armed){
+    const nm=r.armed.betSide==='B'?'BANKER':'PLAYER';
+    bb.className='betbar '+r.armed.betSide;
+    bb.textContent='BET '+nm+' — reversal';
+    sub.textContent='1-1-2 fired (pair '+r.armed.pairSide+r.armed.pairSide+') · bet the break, 1 bet & out.';
+  }else{
+    bb.className='betbar wait'; bb.textContent='WAIT';
+    sub.textContent='Watching for two singles then a pair (BPBB / PBPP).';
+  }
+
+  // road (Big Road with tie diagonals)
+  const DISP=Math.max(20,r.road.length+1);
+  const rd=r.road.map(c=>c.slice()); while(rd.length<DISP)rd.push([]);
+  const tieSVG='<span class="tie"><svg viewBox="0 0 30 30"><line x1="3" y1="27" x2="27" y2="3" stroke="#12b886" stroke-width="3"/></svg></span>';
+  document.getElementById('road').innerHTML=rd.map(col=>{
+    const cells=col.map(c=>'<div class="rcell '+c.side+(c.sig?' sig':'')+'">'+c.side+
+      (c.ties?tieSVG+'<span class="tn">'+c.ties+'</span>':'')+'</div>').join('');
+    return '<div class="rcol">'+cells+'</div>';
+  }).join('');
+
+  // core
+  document.getElementById('cWL').textContent=S.fw+'-'+S.fl;
+  const tot=S.fw+S.fl;
+  document.getElementById('cWin').textContent=tot?Math.round(S.fw/tot*100)+'%':'—';
+  document.getElementById('cMaxW').textContent=S.maxW;
+  document.getElementById('cMaxL').textContent=S.maxL;
+  const fl=document.getElementById('cFlat'); fl.textContent=(S.flat>=0?'+':'')+S.flat+'u'; fl.className='val '+(S.flat>=0?'pos':'neg');
+  const pl=document.getElementById('cPlan'); pl.textContent=(S.plan>=0?'+':'')+fmt(S.plan)+'u'; pl.className='val '+(S.plan>=0?'pos':'neg');
+  document.getElementById('cStreak').textContent=S.curW?('W'+S.curW):S.curL?('L'+S.curL):'—';
+
+  // stat 2 next-3
+  const n3=Object.entries(S.n3).sort((a,b)=>b[1]-a[1]);
+  const n3tot=n3.reduce((a,x)=>a+x[1],0);
+  document.getElementById('next3').innerHTML=n3.length?n3.slice(0,6).map(([k,v])=>
+    '<div class="r"><span>'+k+'</span><b>'+v+' ('+Math.round(v/n3tot*100)+'%)</b></div>').join(''):'<div class="r" style="color:#aab2c5">no losses logged yet</div>';
+
+  // tie mixed
+  const tW=S.tieW,tL=S.tieL,cW=S.clnW,cL=S.clnL;
+  const wp=(w,l)=>(w+l)?Math.round(w/(w+l)*100)+'%':'—';
+  document.getElementById('tieMix').innerHTML=
+    '<div class="r"><span>Tie mixed in</span><b>'+tW+'-'+tL+' · '+wp(tW,tL)+' win</b></div>'+
+    '<div class="r"><span>Clean pattern</span><b>'+cW+'-'+cL+' · '+wp(cW,cL)+' win</b></div>';
+
+  // position
+  const pos=[['Start (≤25)',S.pos.s],['Middle (26-50)',S.pos.m],['End (>50)',S.pos.e]];
+  const pmax=Math.max(1,...pos.map(p=>p[1].w+p[1].l));
+  document.getElementById('posHist').innerHTML=pos.map(p=>{
+    const t=p[1].w+p[1].l;
+    return '<div class="hbar"><div class="hc">'+wp(p[1].w,p[1].l)+'</div><div class="hb g" style="height:'+Math.round(t/pmax*100)+'%"></div><div class="hn">'+p[0].split(' ')[0]+'</div></div>';
+  }).join('');
+  document.getElementById('posSub').textContent='Win% and volume by third of the shoe.';
+
+  // run-length
+  const rmax=Math.max(1,...S.runHist);
+  document.getElementById('runHist').innerHTML=S.runHist.map((c,i)=>
+    '<div class="hbar"><div class="hc">'+c+'</div><div class="hb'+(i===0?' g':'')+'" style="height:'+Math.round(c/rmax*100)+'%"></div><div class="hn">'+(i===6?'7+':i+1)+'</div></div>').join('');
+  document.getElementById('chopRows').innerHTML=
+    '<div class="r"><span>Choppy shoe (singles &gt;50%)</span><b>'+wp(S.chop.cw,S.chop.cl)+' win</b></div>'+
+    '<div class="r"><span>Trendy shoe</span><b>'+wp(S.chop.tw,S.chop.tl)+' win</b></div>';
+
+  // lead & ties
+  document.getElementById('leadRows').innerHTML=
+    '<div class="r"><span>Banker leads</span><b>'+wp(S.lead.B.w,S.lead.B.l)+' win ('+(S.lead.B.w+S.lead.B.l)+')</b></div>'+
+    '<div class="r"><span>Player leads</span><b>'+wp(S.lead.P.w,S.lead.P.l)+' win ('+(S.lead.P.w+S.lead.P.l)+')</b></div>'+
+    '<div class="r"><span>Even</span><b>'+wp(S.lead.E.w,S.lead.E.l)+' win ('+(S.lead.E.w+S.lead.E.l)+')</b></div>'+
+    '<div class="r"><span>Avg ties @ win / loss</span><b>'+(S.fw?fmt(S.tiesAtW/S.fw,2):'—')+' / '+(S.fl?fmt(S.tiesAtL/S.fl,2):'—')+'</b></div>';
+
+  // hour + mult
+  const hmax=Math.max(1,...S.hour);
+  const hours=S.hour.map((c,h)=>({c,h})).filter(x=>x.c>0);
+  document.getElementById('hourHist').innerHTML=hours.length?hours.map(x=>
+    '<div class="hbar"><div class="hc">'+x.c+'</div><div class="hb" style="height:'+Math.round(x.c/hmax*100)+'%"></div><div class="hn">'+x.h+'h</div></div>').join(''):'<div style="color:#aab2c5;font-size:12px">no wins yet</div>';
+  document.getElementById('multRows').innerHTML=
+    '<div class="r"><span>Multiplier wins (tagged)</span><b>'+S.mult+' of '+S.fw+'</b></div>';
+
+  // best summary
+  const best=[];
+  if(tot>=10){
+    best.push('1st bet hits <b>'+Math.round(S.fw/tot*100)+'%</b> over '+tot+' signals; worst run <b>'+S.maxL+' losses</b>, best <b>'+S.maxW+' wins</b>.');
+    best.push('Flat 1-&amp;-out: <b>'+(S.flat>=0?'+':'')+S.flat+'u</b> vs plan 1·½·1·2: <b>'+(S.plan>=0?'+':'')+fmt(S.plan)+'u</b> — '+(S.plan>S.flat?'the plan is ahead.':S.plan<S.flat?'flat is ahead.':'dead even.'));
+    if(n3.length) best.push('After a loss, most common next-3 = <b>'+n3[0][0]+'</b> ('+Math.round(n3[0][1]/n3tot*100)+'%) → '+(n3[0][0][0]==='S'?'the streak tends to keep going.':'it tends to flip back.'));
+    const chC=wp(S.chop.cw,S.chop.cl),chT=wp(S.chop.tw,S.chop.tl);
+    if((S.chop.cw+S.chop.cl)&&(S.chop.tw+S.chop.tl)) best.push('Choppy shoes '+chC+' vs trendy '+chT+' — '+(S.chop.cw/(S.chop.cw+S.chop.cl||1)>S.chop.tw/(S.chop.tw+S.chop.tl||1)?'chop-heavy shoes favour the signal.':'trendy shoes hold up too.'));
+  } else best.push('Log ~'+Math.max(0,10-tot)+' more signals for a first read. Early numbers swing hard.');
+  document.getElementById('best').innerHTML=best.map(b=>'• '+b).join('<br>');
+
+  document.getElementById('foot').innerHTML='Ties draw a green diagonal on the current cell (with a count) and never advance the road. '+
+    'Yellow ring = a cell that fired the signal. Purple/green/red dot on a cell = signal win / loss. '+
+    '"Mark last win ×" tags the most recent win as a Prosperity multiplier. Export CSV dumps every signal row for your own analysis.';
+
+  document.getElementById('btnMult').disabled=(r.lastWinEv<0);
+}
+
+function exportCSV(){
+  const sg=sim().S.signals;
+  const head=['shoe','hand','pairSide','betSide','result','tieMixed','lead','B','P','T','choppy','hour','mult'];
+  const rows=[head.join(',')].concat(sg.map(s=>[s.shoe,s.hand,s.pairSide,s.betSide,s.result,s.tie,s.lead,s.B,s.P,s.T,s.choppy,s.hour,s.mult].join(',')));
+  const blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download='baccarat_signals.csv'; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify({events,
+  bal:document.getElementById('bal').value,unit:document.getElementById('unit').value,cur:document.getElementById('cur').value}));}catch(e){}}
+try{const d=JSON.parse(localStorage.getItem(KEY));if(d){events=d.events||[];
+  if(d.bal!=null)document.getElementById('bal').value=d.bal;
+  if(d.unit!=null)document.getElementById('unit').value=d.unit;
+  if(d.cur!=null)document.getElementById('cur').value=d.cur;}}catch(e){}
+render();
+</script>
+</body>
+</html>
