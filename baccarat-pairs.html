@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pairs &amp; Ties · Research Terminal</title>
+<style>
+:root{
+  --bg:#0b111a;--panel:#131c28;--panel2:#0f1722;--line:#26323f;--line2:#1b2531;
+  --txt:#dfe7f0;--mut:#7d8da0;--gold:#d9a94a;--emer:#33c48a;--red:#e8565d;--blue:#5b8def;--violet:#9a7bff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--txt);
+  padding:26px 16px 60px;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+.app{max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--line);padding-bottom:14px}
+.brand{font-size:23px;font-weight:800;letter-spacing:.3px}
+.brand .g{color:var(--gold)}
+.sub{color:var(--mut);font-size:12.5px;margin-top:3px;letter-spacing:.2px}
+.badge{font-size:11px;color:var(--gold);border:1px solid #3a3320;background:#1c1811;padding:5px 11px;border-radius:20px;font-weight:700;letter-spacing:.5px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.sec{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.sec::after{content:'';flex:1;height:1px;background:var(--line2)}
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:linear-gradient(180deg,#141e2b,#101825);border:1px solid var(--line);border-radius:12px;padding:14px 15px}
+.kpi .k{font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--mut)}
+.kpi .v{font-size:30px;font-weight:800;margin-top:5px;letter-spacing:-.5px;line-height:1}
+.kpi .u{font-size:12px;color:var(--mut);margin-top:5px}
+.kpi.warn{border-color:#5a2327;background:linear-gradient(180deg,#25141a,#1a0f14);box-shadow:0 0 0 1px #6e2a30 inset}
+.kpi.warn .v{color:var(--red)}
+.kpi.good .v{color:var(--emer)}.kpi.gold .v{color:var(--gold)}
+/* cards input */
+.hand-wrap{display:grid;grid-template-columns:200px 1fr;gap:16px}
+@media(max-width:720px){.hand-wrap{grid-template-columns:1fr}}
+.handnow{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:center;display:flex;flex-direction:column;justify-content:center}
+.handnow .k{font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.handnow .big{font-size:44px;font-weight:800;margin:4px 0;line-height:1}
+.handnow .big.pos{color:var(--emer)}.handnow .big.neg{color:var(--red)}.handnow .big.zero{color:var(--txt)}
+.handnow .cc{font-size:12px;color:var(--mut)}
+.cards{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.card{background:#1a2431;border:1px solid var(--line);border-radius:10px;padding:11px 0;text-align:center;cursor:pointer;transition:.1s;color:var(--txt);font-weight:800}
+.card:hover{border-color:var(--gold);background:#212d3c}
+.card .r{font-size:18px}.card .p{font-size:10px;color:var(--mut);margin-top:2px;font-weight:600}
+.closebar{display:flex;gap:9px;margin-top:12px;flex-wrap:wrap}
+.cbtn{flex:1;min-width:92px;border:none;border-radius:10px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;color:#0b111a;letter-spacing:.4px}
+.c-tie{background:var(--emer)}.c-pair{background:var(--gold)}.c-dbl{background:var(--violet);color:#fff}.c-next{background:#33414f;color:var(--txt)}.c-undo{background:#33414f;color:var(--txt)}
+/* pm board */
+.pmstrip{display:flex;gap:6px;flex-wrap:wrap}
+.pm{min-width:34px;text-align:center;padding:6px 8px;border-radius:8px;font-weight:800;font-size:13px;border:1px solid var(--line)}
+.pm.pos{color:var(--emer);background:#0f2019}.pm.neg{color:var(--red);background:#231216}.pm.zero{color:var(--mut);background:#151d28}
+/* manual */
+.mform{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld label{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.fld input,.fld select{font-family:inherit;font-size:15px;font-weight:700;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 11px;color:var(--txt);width:110px}
+.mman{background:var(--gold);color:#0b111a;border:none;border-radius:9px;padding:11px 18px;font-weight:800;cursor:pointer;font-size:14px}
+/* charts */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:720px){.two{grid-template-columns:1fr}}
+.chart{display:flex;gap:6px;align-items:flex-end;height:120px}
+.bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%}
+.bar .bb{width:100%;border-radius:4px 4px 0 0;min-height:3px;background:#2f4257}
+.bar .bb.best{background:var(--gold)}
+.bar .bn{font-size:10px;color:var(--mut);font-weight:700}.bar .bc{font-size:10px;color:var(--txt);font-weight:800}
+.note{font-size:12.5px;color:var(--mut);margin-top:12px;line-height:1.5}
+.note b{color:var(--gold)}
+/* logger */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line2)}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+th{font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--mut);font-weight:700}
+td{font-weight:600}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.3px}
+.pill.T{background:#0f2019;color:var(--emer)}.pill.P{background:#231d0f;color:var(--gold)}.pill.D{background:#1c1630;color:var(--violet)}
+.man{font-size:10px;color:var(--mut);border:1px solid var(--line);padding:1px 6px;border-radius:5px;margin-left:6px}
+.pos{color:var(--emer)}.neg{color:var(--red)}.zero{color:var(--mut)}
+.ctrls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.ctrls button{font-family:inherit;font-weight:800;font-size:14px;border:none;border-radius:10px;padding:11px 18px;cursor:pointer;letter-spacing:.3px}
+.b-new{background:#33414f;color:var(--txt)}.b-csv{background:var(--emer);color:#0b111a}.b-reset{background:#3a2226;color:#f0a5a9}
+.foot{font-size:11.5px;color:var(--mut);line-height:1.6}
+.scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="head">
+    <div><div class="brand">PAIRS &amp; TIES <span class="g">·</span> RESEARCH TERMINAL</div>
+      <div class="sub">Card-point ledger &amp; pair/tie gap analytics — a data desk for the side bets.</div></div>
+    <div class="badge">LIVE</div>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="panel">
+    <div class="sec">Card input · current hand</div>
+    <div class="hand-wrap">
+      <div class="handnow">
+        <div class="k">Hand total</div>
+        <div class="big zero" id="handSum">0</div>
+        <div class="cc" id="handCards">0 cards</div>
+      </div>
+      <div>
+        <div class="cards" id="cards"></div>
+        <div class="closebar">
+          <button class="cbtn c-tie" onclick="close_('T')">TIE</button>
+          <button class="cbtn c-pair" onclick="close_('P')">PAIR</button>
+          <button class="cbtn c-dbl" onclick="close_('D')">DBL PAIR</button>
+          <button class="cbtn c-next" onclick="close_('N')">NEXT (no event)</button>
+          <button class="cbtn c-undo" onclick="undo()">UNDO</button>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px" class="sec">+/- board · this shoe</div>
+    <div class="scroll"><div class="pmstrip" id="pmstrip"></div></div>
+  </div>
+
+  <div class="panel">
+    <div class="sec">Manual log · fast entry</div>
+    <div class="mform">
+      <div class="fld"><label>Hand #</label><input id="mHand" type="number" min="1" placeholder="e.g. 34"></div>
+      <div class="fld"><label>Type</label><select id="mType"><option value="P">PAIR</option><option value="T">TIE</option><option value="D">DBL PAIR</option></select></div>
+      <div class="fld"><label>Since Tie</label><input id="mST" type="number" min="0" placeholder="gap"></div>
+      <div class="fld"><label>Since Pair</label><input id="mSP" type="number" min="0" placeholder="gap"></div>
+      <button class="mman" onclick="manual()">Add to log</button>
+    </div>
+  </div>
+
+  <div class="two">
+    <div class="panel">
+      <div class="sec">Best gap before a pair/tie win</div>
+      <div class="chart" id="gapChart"></div>
+      <div class="note" id="gapNote"></div>
+    </div>
+    <div class="panel">
+      <div class="sec">Where in the shoe (hand ranges)</div>
+      <div class="chart" id="rangeChart"></div>
+      <div class="note" id="rangeNote"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="sec">Logger · tie &amp; pair events</div>
+    <div class="scroll"><table>
+      <thead><tr><th>Hand</th><th>Outcome</th><th>Prev +/-</th><th>Since Tie</th><th>Since Pair</th><th>Gap</th></tr></thead>
+      <tbody id="log"></tbody>
+    </table></div>
+  </div>
+
+  <div class="panel ctrls">
+    <button class="b-new" onclick="newShoe()">New Shoe (reset +/- board)</button>
+    <button class="b-csv" onclick="exportCSV()">Export CSV</button>
+    <button class="b-reset" onclick="resetAll()">Reset All</button>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const KEY='baccaratPairs_v1';
+let events=[];
+const PTS={A:1,'2':0,'3':-1,'4':-1,'5':-1,'6':0,'7':-6,'8':2,'9':2,T:1,J:1,Q:1,K:1};
+const CARDS=['A','2','3','4','5','6','7','8','9','T','J','Q','K'];
+function addCard(c){events.push({c});save();render();}
+function close_(t){events.push({close:t});save();render();}
+function undo(){events.pop();save();render();}
+function newShoe(){events.push({shoe:true});save();render();}
+function resetAll(){if(confirm('Clear all shoes and stats?')){events=[];save();render();}}
+function manual(){
+  const h=parseInt(document.getElementById('mHand').value);
+  if(!h){alert('Enter a hand number.');return;}
+  const type=document.getElementById('mType').value;
+  const st=parseInt(document.getElementById('mST').value); const sp=parseInt(document.getElementById('mSP').value);
+  events.push({m:{h,type,st:isNaN(st)?null:st,sp:isNaN(sp)?null:sp}});
+  document.getElementById('mHand').value='';document.getElementById('mST').value='';document.getElementById('mSP').value='';
+  save();render();
+}
+function pmClass(v){return v>0?'pos':v<0?'neg':'zero';}
+function sgn(v){return (v>0?'+':'')+v;}
+
+function sim(){
+  const S={totalHands:0,ties:0,pairs:0,dbls:0,maxConsec:0,gapHist:new Array(10).fill(0),
+    rangeHist:{},log:[],maxGap:0,latestGap:null};
+  // per shoe
+  let shoeHand=0,curSum=0,curCards=0,prevSum=null,board=[],lastEv=0,lastTie=0,lastPair=0,pairStreak=0;
+  function endShoe(){ shoeHand=0;curSum=0;curCards=0;prevSum=null;board=[];lastEv=0;lastTie=0;lastPair=0;pairStreak=0; }
+
+  events.forEach(ev=>{
+    if(ev.shoe){endShoe();return;}
+    if(ev.c!==undefined){ curSum+=PTS[ev.c]; curCards++; return; }
+    if(ev.close!==undefined){
+      shoeHand++; S.totalHands++;
+      const t=ev.close;
+      if(t!=='N'){
+        const gap=shoeHand-lastEv, st=lastTie?shoeHand-lastTie:shoeHand, sp=lastPair?shoeHand-lastPair:shoeHand;
+        if(t==='T'){S.ties++;} else {S.pairs++; if(t==='D')S.dbls++;}
+        // consecutive pairs (P or D on consecutive hands)
+        if(t==='P'||t==='D'){pairStreak++; if(pairStreak>S.maxConsec)S.maxConsec=pairStreak;} else pairStreak=0;
+        S.gapHist[Math.min(gap,10)-1]++; if(gap>S.maxGap)S.maxGap=gap; S.latestGap=gap;
+        const rk=Math.floor((shoeHand-1)/10); S.rangeHist[rk]=(S.rangeHist[rk]||0)+1;
+        S.log.push({hand:shoeHand,type:t,pm:prevSum,st,sp,gap,man:false});
+        lastEv=shoeHand; if(t==='T')lastTie=shoeHand; else lastPair=shoeHand;
+      } else pairStreak=0;
+      board.push(curSum); prevSum=curSum; curSum=0; curCards=0;
+    }
+    if(ev.m!==undefined){
+      const {h,type,st,sp}=ev.m;
+      if(type==='T')S.ties++; else {S.pairs++; if(type==='D')S.dbls++;}
+      const gap=(st!=null&&sp!=null)?Math.min(st,sp):(sp!=null?sp:st);
+      if(gap!=null){S.gapHist[Math.min(Math.max(gap,1),10)-1]++; if(gap>S.maxGap)S.maxGap=gap; S.latestGap=gap;}
+      const rk=Math.floor((h-1)/10); S.rangeHist[rk]=(S.rangeHist[rk]||0)+1;
+      S.log.push({hand:h,type,pm:null,st,sp,gap,man:true});
+    }
+  });
+
+  // best gap = mode
+  let bestGap=0,bestCt=-1; S.gapHist.forEach((c,i)=>{if(c>bestCt){bestCt=c;bestGap=i+1;}});
+  const evTot=S.gapHist.reduce((a,b)=>a+b,0);
+  const avgHand=S.log.length?S.log.reduce((a,r)=>a+r.hand,0)/S.log.length:0;
+  const curGap=shoeHand-lastEv;
+  return {S,curSum,curCards,board,curGap,bestGap:evTot?bestGap:0,evTot,avgHand,shoeHand};
+}
+
+function render(){
+  const r=sim(), S=r.S;
+
+  // cards
+  document.getElementById('cards').innerHTML=CARDS.map(c=>
+    '<div class="card" onclick="addCard(\''+c+'\')"><div class="r">'+c+'</div><div class="p">'+sgn(PTS[c])+'</div></div>').join('');
+  const hs=document.getElementById('handSum'); hs.textContent=sgn(r.curSum); hs.className='big '+pmClass(r.curSum);
+  document.getElementById('handCards').textContent=r.curCards+' card'+(r.curCards===1?'':'s');
+
+  // +/- board
+  document.getElementById('pmstrip').innerHTML=r.board.length?r.board.map(v=>
+    '<div class="pm '+pmClass(v)+'">'+sgn(v)+'</div>').join(''):'<span style="color:#5f6f82;font-size:12px">no hands closed yet this shoe</span>';
+
+  // KPIs
+  const gapWarn=(r.bestGap>0 && r.curGap>r.bestGap);
+  const kpis=[
+    {k:'Hands played',v:S.totalHands,cls:''},
+    {k:'Ties',v:S.ties,cls:'good'},
+    {k:'Pairs',v:S.pairs,cls:'gold'},
+    {k:'Gap counter',v:Math.min(r.curGap,10)+(r.curGap>10?'+':''),cls:gapWarn?'warn':'',u:gapWarn?'past best gap':'within range'},
+    {k:'Latest gap',v:S.latestGap==null?'—':S.latestGap,cls:''},
+    {k:'Max gap',v:S.maxGap,cls:''},
+    {k:'Max consec pairs',v:S.maxConsec,cls:'gold'},
+    {k:'Double pairs',v:S.dbls,cls:'violet'},
+  ];
+  document.getElementById('kpis').innerHTML=kpis.map(x=>
+    '<div class="kpi '+x.cls+'"><div class="k">'+x.k+'</div><div class="v">'+x.v+'</div>'+(x.u?'<div class="u">'+x.u+'</div>':'')+'</div>').join('');
+
+  // gap chart
+  const gmax=Math.max(1,...S.gapHist);
+  document.getElementById('gapChart').innerHTML=S.gapHist.map((c,i)=>
+    '<div class="bar"><div class="bc">'+c+'</div><div class="bb'+(r.bestGap===i+1&&r.evTot?' best':'')+'" style="height:'+Math.round(c/gmax*100)+'%"></div><div class="bn">'+(i===9?'10+':i+1)+'</div></div>').join('');
+  document.getElementById('gapNote').innerHTML=r.evTot?
+    ('Best (most common) gap: <b>'+r.bestGap+' hand'+(r.bestGap===1?'':'s')+'</b> over '+r.evTot+' events · avg event lands on hand <b>'+Math.round(r.avgHand)+'</b>.')
+    :'Log a few pair/tie events to reveal the gap rhythm.';
+
+  // range chart
+  const rks=Object.keys(S.rangeHist).map(Number).sort((a,b)=>a-b);
+  const maxRk=rks.length?Math.max(...rks):0;
+  const rlabels=[]; for(let i=0;i<=Math.max(maxRk,4);i++)rlabels.push(i);
+  const rmax=Math.max(1,...rlabels.map(i=>S.rangeHist[i]||0));
+  let bestRk=0,bestRc=-1; rlabels.forEach(i=>{const c=S.rangeHist[i]||0;if(c>bestRc){bestRc=c;bestRk=i;}});
+  document.getElementById('rangeChart').innerHTML=rlabels.map(i=>{
+    const c=S.rangeHist[i]||0;
+    return '<div class="bar"><div class="bc">'+c+'</div><div class="bb'+(i===bestRk&&r.evTot?' best':'')+'" style="height:'+Math.round(c/rmax*100)+'%"></div><div class="bn">'+(i*10+1)+'-'+(i*10+10)+'</div></div>';
+  }).join('');
+  document.getElementById('rangeNote').innerHTML=r.evTot?
+    ('Busiest range: <b>hands '+(bestRk*10+1)+'-'+(bestRk*10+10)+'</b> ('+bestRc+' events). Ranges are 10 hands wide.')
+    :'Ranges fill in as you log where in the shoe pairs/ties land.';
+
+  // logger (newest first)
+  document.getElementById('log').innerHTML=S.log.length?S.log.slice().reverse().map(e=>{
+    const pm=e.pm==null?'<span class="zero">—'+(e.man?'<span class="man">MAN</span>':'')+'</span>':'<span class="'+pmClass(e.pm)+'">'+sgn(e.pm)+'</span>'+(e.man?'<span class="man">MAN</span>':'');
+    const tp=e.type==='T'?'TIE':e.type==='D'?'DBL PAIR':'PAIR';
+    return '<tr><td>'+e.hand+'</td><td><span class="pill '+e.type+'">'+tp+'</span></td><td>'+pm+'</td><td>'+(e.st==null?'—':e.st)+'</td><td>'+(e.sp==null?'—':e.sp)+'</td><td>'+(e.gap==null?'—':e.gap)+'</td></tr>';
+  }).join(''):'<tr><td colspan="6" style="text-align:center;color:#5f6f82">no tie/pair events logged yet</td></tr>';
+
+  document.getElementById('foot').innerHTML='Card points: A=+1 · 2,6=0 · 3,4,5=-1 · 7=-6 · 8,9=+2 · 10,J,Q,K=+1. '+
+    'Each closed hand appends its total to the +/- board; a pair/tie logs the <b>previous</b> hand\u2019s total. '+
+    'Gap counter turns red once you pass the most common gap (capped at 10). New Shoe clears the +/- board but keeps all stats.';
+}
+
+function exportCSV(){
+  const log=sim().S.log;
+  const head=['hand','type','prev_pm','since_tie','since_pair','gap','manual'];
+  const rows=[head.join(',')].concat(log.map(e=>[e.hand,e.type,e.pm==null?'':e.pm,e.st==null?'':e.st,e.sp==null?'':e.sp,e.gap==null?'':e.gap,e.man?1:0].join(',')));
+  const blob=new Blob([rows.join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='pairs_ties_log.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({events}));}catch(e){}}
+try{const d=JSON.parse(localStorage.getItem(KEY));if(d)events=d.events||[];}catch(e){}
+render();
+</script>
+</body>
+</html>
