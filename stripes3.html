@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STRIPES · The Nine Signal</title>
+<style>
+:root{
+  --bg0:#05070d;--bg1:#0a0e18;--panel:rgba(255,255,255,.035);--line:rgba(255,255,255,.09);
+  --txt:#e9eef7;--mut:#7a8aa2;--bank:#ff2e4d;--play:#2e7dff;--tie:#12d6a0;--nine:#ffc531;
+  --emer:#2fe08a;--red:#ff5964;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;color:var(--txt);
+  background:radial-gradient(1200px 700px at 50% -10%,#141c2e 0%,var(--bg1) 45%,var(--bg0) 100%);
+  min-height:100vh;padding:24px 14px 60px;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+.app{max-width:1020px;margin:0 auto;display:flex;flex-direction:column;gap:15px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.brand{font-size:25px;font-weight:900;letter-spacing:3px}
+.brand .n{color:var(--nine);text-shadow:0 0 18px rgba(255,197,49,.5)}
+.sub{color:var(--mut);font-size:12px;letter-spacing:.4px;margin-top:3px}
+.chip{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--nine);border:1px solid rgba(255,197,49,.35);background:rgba(255,197,49,.08);padding:6px 13px;border-radius:20px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;backdrop-filter:blur(4px)}
+.plabel{font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);margin-bottom:12px}
+/* signal */
+.signal{border-radius:18px;padding:22px;text-align:center;border:1px solid var(--line);background:var(--panel);transition:.2s}
+.signal .st{font-size:12px;font-weight:800;letter-spacing:2px;color:var(--mut);text-transform:uppercase}
+.signal .big{font-size:40px;font-weight:900;letter-spacing:1px;margin:6px 0}
+.signal .meta{font-size:14px;color:var(--mut);font-weight:700}
+.signal.armed{animation:glow 1.6s ease-in-out infinite}
+.signal.armed.B{border-color:var(--bank);background:linear-gradient(180deg,rgba(255,46,77,.14),rgba(255,46,77,.03))}
+.signal.armed.B .big{color:var(--bank);text-shadow:0 0 24px rgba(255,46,77,.55)}
+.signal.armed.P{border-color:var(--play);background:linear-gradient(180deg,rgba(46,125,255,.14),rgba(46,125,255,.03))}
+.signal.armed.P .big{color:var(--play);text-shadow:0 0 24px rgba(46,125,255,.55)}
+.signal.ready{border-color:rgba(255,197,49,.5);background:linear-gradient(180deg,rgba(255,197,49,.1),transparent)}
+.signal.ready .big{color:var(--nine)}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(255,197,49,.0)}50%{box-shadow:0 0 34px 2px rgba(255,197,49,.22)}}
+.flipwarn{margin-top:12px;font-size:13px;font-weight:800;letter-spacing:.5px;color:#ffb14e}
+.field select{font-family:inherit;font-size:14px;font-weight:800;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;padding:8px;color:var(--txt)}
+.cmp{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:600px){.cmp{grid-template-columns:1fr}}
+.cmpcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+.cmpcard.sel{border-color:var(--nine);box-shadow:0 0 18px rgba(255,197,49,.18)}
+.cmpcard .cn{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--mut)}
+.cmpcard .cv{font-size:24px;font-weight:900;margin:5px 0}
+.cmpcard .cv.pos{color:var(--emer)}.cmpcard .cv.neg{color:var(--red)}
+.cmpcard .cd{font-size:11px;color:var(--mut);font-weight:600}
+.cmpnote{font-size:11.5px;color:var(--mut);margin-top:12px;line-height:1.5}
+.flipwarn:empty{display:none}
+.signal.flip{border-color:rgba(255,146,49,.55)!important;box-shadow:0 0 26px rgba(255,146,49,.18)!important}
+.logflip{color:#ffb14e;font-weight:900;margin-left:5px}
+/* gauges */
+.gauges{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.gauge{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.gauge .g-top{display:flex;justify-content:space-between;align-items:center}
+.gauge .g-lab{font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut)}
+.gauge .g-side{font-size:26px;font-weight:900}
+.gauge .g-side.B{color:var(--bank)}.gauge .g-side.P{color:var(--play)}.gauge .g-side.n{color:var(--mut)}
+.gauge .g-bar{height:10px;border-radius:6px;background:rgba(255,255,255,.06);margin-top:12px;overflow:hidden;display:flex}
+.gauge .g-bar .b{background:var(--bank)}.gauge .g-bar .p{background:var(--play)}
+.gauge .g-sub{font-size:12px;color:var(--mut);margin-top:8px;font-weight:600}
+/* roads */
+.roads{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+@media(max-width:760px){.roads{grid-template-columns:1fr}.gauges{grid-template-columns:1fr}}
+.scroll{overflow-x:auto}
+.bead{display:flex;gap:4px}
+.bcol{display:flex;flex-direction:column;gap:4px}
+.bd{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff;position:relative}
+.bd.B{background:var(--bank)}.bd.P{background:var(--play)}.bd.T{background:var(--tie)}
+.bd.nine{box-shadow:0 0 0 2px var(--nine),0 0 10px rgba(255,197,49,.5)}
+.bd .n9{position:absolute;top:-4px;right:-4px;font-size:8px;font-weight:900;color:#111;background:var(--nine);border-radius:50%;width:12px;height:12px;display:flex;align-items:center;justify-content:center}
+.big-road{display:flex;gap:4px;align-items:flex-start;min-height:150px}
+.rcol{display:flex;flex-direction:column;gap:4px}
+.rc{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#fff;position:relative}
+.rc.B{background:var(--bank)}.rc.P{background:var(--play)}
+.rc.nine{box-shadow:0 0 0 2px var(--nine)}
+.rc .tie{position:absolute;inset:-2px;pointer-events:none}
+.rc .tn{position:absolute;bottom:-4px;right:-4px;font-size:8px;font-weight:900;color:var(--tie)}
+/* controls */
+.controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center;justify-content:center}
+.field{display:flex;flex-direction:column;gap:5px;margin-right:6px}
+.field label{font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.field input{font-family:inherit;font-size:16px;font-weight:800;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;padding:8px 10px;color:var(--txt);width:80px;text-align:center}
+button{font-family:inherit;cursor:pointer;font-weight:800;border:none;border-radius:11px;transition:.12s;color:#fff}
+button:active{transform:translateY(1px)}
+.bk{background:linear-gradient(180deg,#ff4258,#e01e37);font-size:17px;padding:13px 22px}
+.pl{background:linear-gradient(180deg,#3d87ff,#1f5ce0);font-size:17px;padding:13px 22px}
+.ti{background:linear-gradient(180deg,#1ce0aa,#0bb98a);font-size:15px;padding:13px 18px;color:#052}
+.nn{background:linear-gradient(180deg,#ffce4d,#f0ab00);font-size:17px;padding:13px 22px;color:#3a2a00;box-shadow:0 0 16px rgba(255,197,49,.35)}
+.mini{background:rgba(255,255,255,.08);font-size:13px;padding:12px 15px;color:var(--txt)}
+.mini.csv{background:linear-gradient(180deg,#2fe08a,#12b56a);color:#052}
+.mini.rst{background:rgba(255,89,100,.18);color:#ff9aa2}
+/* stats */
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:600px){.grid4{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 10px;text-align:center}
+.kpi .k{font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.kpi .v{font-size:25px;font-weight:900;margin-top:4px}
+.kpi .v.pos{color:var(--emer)}.kpi .v.neg{color:var(--red)}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+@media(max-width:760px){.three{grid-template-columns:1fr}}
+.hist{display:flex;gap:6px;align-items:flex-end;height:86px;margin-top:6px}
+.hbar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%}
+.hbar .hb{width:100%;border-radius:5px 5px 0 0;min-height:3px;background:linear-gradient(180deg,#ffd868,#f0ab00)}
+.hbar .hb.miss{background:rgba(255,255,255,.14)}
+.hbar .hn{font-size:10px;font-weight:800;color:var(--mut)}.hbar .hc{font-size:10px;font-weight:800}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+th{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--mut);font-weight:800}
+td{font-weight:600}.rw{color:var(--emer);font-weight:800}.rl{color:var(--red);font-weight:800}
+.foot{font-size:11px;color:var(--mut);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="head">
+    <div><div class="brand">STRI<span class="n">9</span>ES</div><div class="sub">Big Road stripe + Bead lead + a Nine = the signal.</div></div>
+    <div class="chip">THE NINE SIGNAL</div>
+  </div>
+
+  <div class="signal" id="signal"><div class="st" id="sigSt">WATCHING</div><div class="big" id="sigBig">—</div><div class="meta" id="sigMeta"></div><div class="flipwarn" id="sigWarn"></div></div>
+
+  <div class="gauges">
+    <div class="gauge"><div class="g-top"><span class="g-lab">Bead lead · this column</span><span class="g-side n" id="glSide">—</span></div>
+      <div class="g-bar" id="glBar"></div><div class="g-sub" id="glSub">no beads yet</div></div>
+    <div class="gauge"><div class="g-top"><span class="g-lab">Big Road · current streak</span><span class="g-side n" id="gsSide">—</span></div>
+      <div class="g-bar" id="gsBar"></div><div class="g-sub" id="gsSub">no streak yet</div></div>
+  </div>
+
+  <div class="roads">
+    <div class="panel"><div class="plabel">Bead Plate</div><div class="scroll"><div class="bead" id="bead"></div></div></div>
+    <div class="panel"><div class="plabel">Big Road</div><div class="scroll"><div class="big-road" id="bigroad"></div></div></div>
+  </div>
+
+  <div class="panel controls">
+    <div class="field"><label>Base</label><input id="base" type="number" min="0.5" step="0.5" value="1" oninput="save();render()"></div>
+    <div class="field"><label>Max Mart</label><input id="maxm" type="number" min="1" max="8" step="1" value="3" oninput="save();render()"></div>
+    <div class="field"><label>Bet Mode</label><select id="mode" onchange="save();render()"><option value="flat">Flat 1u</option><option value="ladder" selected>Ladder 1·3·6</option><option value="mart">Martingale</option></select></div>
+    <button class="bk" onclick="add('B')">BANKER</button>
+    <button class="pl" onclick="add('P')">PLAYER</button>
+    <button class="ti" onclick="add('T')">TIE</button>
+    <button class="nn" onclick="nine()">Mark 9</button>
+    <button class="mini" onclick="undo()">Undo</button>
+    <button class="mini" onclick="newShoe()">New Shoe</button>
+    <button class="mini csv" onclick="exportCSV()">CSV</button>
+    <button class="mini rst" onclick="resetAll()">Reset</button>
+  </div>
+
+  <div class="grid4">
+    <div class="kpi"><div class="k">Signals W-L</div><div class="v" id="kWL">0-0</div></div>
+    <div class="kpi"><div class="k">Win %</div><div class="v" id="kWin">—</div></div>
+    <div class="kpi"><div class="k">Hands (shoe)</div><div class="v" id="kHands">0</div></div>
+    <div class="kpi"><div class="k">Net (u)</div><div class="v" id="kPnl">0</div></div>
+  </div>
+
+  <div class="panel"><div class="plabel">Staking A/B · same signals, three plans</div>
+    <div class="cmp" id="cmp"></div><div class="cmpnote" id="cmpnote"></div></div>
+
+  <div class="three">
+    <div class="panel"><div class="plabel">Losses before each win</div><div class="hist" id="hProg"></div></div>
+    <div class="panel"><div class="plabel">Streak length at signal</div><div class="hist" id="hStreak"></div></div>
+    <div class="panel"><div class="plabel">Bead lead at signal</div><div class="hist" id="hLead"></div></div>
+  </div>
+
+  <div class="panel"><div class="plabel">Signal log</div><div class="scroll"><table>
+    <thead><tr><th>Hand</th><th>Bet</th><th>Bead</th><th>Streak</th><th>Step</th><th>Result</th></tr></thead>
+    <tbody id="log"></tbody></table></div></div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const KEY='stripesNine_v1';
+let events=[];
+function getBase(){const v=parseFloat(document.getElementById('base').value);return isNaN(v)||v<=0?1:v;}
+function getMaxMart(){const v=parseInt(document.getElementById('maxm').value);return isNaN(v)||v<1?3:Math.min(v,8);}
+function getMode(){const e=document.getElementById('mode');return e?e.value:'ladder';}
+function add(o){events.push({o,nine:false});save();render();}
+function nine(){for(let i=events.length-1;i>=0;i--){if(events[i].shoe)break;if(events[i].o==='B'||events[i].o==='P'){events[i].nine=!events[i].nine;break;}}save();render();}
+function undo(){events.pop();save();render();}
+function newShoe(){events.push({shoe:true});save();render();}
+function resetAll(){if(confirm('Clear all shoes and stats?')){events=[];save();render();}}
+function fmt(n){return (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+const opp=s=>s==='B'?'P':'B';
+
+function beadLead(cells){
+  const n=cells.length; if(!n)return{side:null,b:0,p:0};
+  const cs=Math.floor((n-1)/6)*6; let b=0,p=0;
+  for(let i=cs;i<n;i++){if(cells[i].o==='B')b++;else if(cells[i].o==='P')p++;}
+  return{side:b>p?'B':p>b?'P':null,b,p,count:Math.max(b,p)};
+}
+
+function replay(){
+  const base=getBase(), maxM=getMaxMart(), mode=getMode();
+  const LAD=[1,3,6];
+  const martMul=k=>Math.pow(2,Math.min(k,maxM-1));
+  const S={wins:0,losses:0,log:[],streakHist:{},leadHist:{},runHist:[0,0,0,0,0,0],flipW:0,flipL:0,
+    flatNet:0,ladNet:0,martNet:0,flatDD:0,ladDD:0,martDD:0,maxLossRun:0};
+  let hands=0,shoeHand=0;
+  let bead=[],big=[],armed=null,lastSigSide=null;
+  let ladStep=0,martStep=0,curRun=0,fPeak=0,lPeak=0,mPeak=0;
+  function reset(){bead=[];big=[];armed=null;lastSigSide=null;shoeHand=0;ladStep=0;martStep=0;curRun=0;}
+  for(const ev of events){
+    if(ev.shoe){reset();continue;}
+    hands++;shoeHand++;
+    const o=ev.o,nine=ev.nine;
+    // resolve armed — ONE bet on the next non-tie outcome
+    if(armed){
+      if(o!=='T'){
+        const win=(o===armed.side);
+        const lS=LAD[ladStep], mS=martMul(martStep);
+        if(win)S.wins++; else S.losses++;
+        S.streakHist[armed.streak]=(S.streakHist[armed.streak]||0)+1;
+        S.leadHist[armed.lead]=(S.leadHist[armed.lead]||0)+1;
+        if(armed.flip){ if(win)S.flipW++; else S.flipL++; }
+        S.flatNet+= win? base : -base;
+        S.ladNet += win? lS*base : -lS*base;
+        S.martNet+= win? mS*base : -mS*base;
+        fPeak=Math.max(fPeak,S.flatNet); S.flatDD=Math.max(S.flatDD,fPeak-S.flatNet);
+        lPeak=Math.max(lPeak,S.ladNet);  S.ladDD =Math.max(S.ladDD, lPeak-S.ladNet);
+        mPeak=Math.max(mPeak,S.martNet); S.martDD=Math.max(S.martDD,mPeak-S.martNet);
+        if(win){S.runHist[Math.min(curRun,5)]++; curRun=0;} else {curRun++; if(curRun>S.maxLossRun)S.maxLossRun=curRun;}
+        S.log.push({hand:shoeHand,side:armed.side,bead:armed.leadSide+armed.lead,streak:armed.streak,res:win?'W':'L',flip:armed.flip,step:ladStep+1});
+        if(win){ladStep=0;martStep=0;} else {ladStep=(ladStep+1)%LAD.length; martStep=(martStep+1)%maxM;}
+        lastSigSide=armed.side; armed=null;
+      }
+    }
+    // bead
+    bead.push({o,nine});
+    // big road (B/P streaks; ties = mark)
+    if(o!=='T'){
+      if(big.length&&big[big.length-1].side===o){big[big.length-1].len++;big[big.length-1].cells.push({nine,ties:0});}
+      else big.push({side:o,len:1,cells:[{nine,ties:0}]});
+    }else{ if(big.length){const c=big[big.length-1].cells;c[c.length-1].ties++;} }
+    // arm check
+    if(!armed&&o!=='T'&&nine){
+      const bs=big.length?big[big.length-1]:null;
+      if(bs&&bs.len>=2){ const L=beadLead(bead);
+        if(L.side===bs.side){ armed={side:bs.side,streak:bs.len,lead:L.count,leadSide:L.side,flip:(lastSigSide!==null&&bs.side!==lastSigSide)}; }
+      }
+    }
+  }
+  const L=beadLead(bead), bs=big.length?big[big.length-1]:null;
+  const ready=(!armed&&bs&&bs.len>=2&&L.side===bs.side);
+  const stake=mode==='flat'?base:mode==='ladder'?LAD[ladStep]*base:martMul(martStep)*base;
+  const net=mode==='flat'?S.flatNet:mode==='ladder'?S.ladNet:S.martNet;
+  return{S,bead,big,armed,hands,shoeHand,base,maxM,mode,lead:L,streak:bs,ready,ladStep,martStep,stake,net,LAD};
+}
+
+function render(){
+  const r=replay(),S=r.S;
+
+  // signal
+  const sig=document.getElementById('signal');
+  if(r.armed){
+    const nm=r.armed.side==='B'?'BANKER':'PLAYER';
+    sig.className='signal armed '+r.armed.side;
+    const modeLbl=r.mode==='flat'?'FLAT · 1 BET':r.mode==='ladder'?('LADDER STEP '+(r.ladStep+1)+'/3'):('MARTINGALE STEP '+(r.martStep+1)+'/'+r.maxM);
+    document.getElementById('sigSt').textContent='BET NOW · '+modeLbl;
+    document.getElementById('sigBig').textContent=nm;
+    document.getElementById('sigMeta').textContent=fmt(r.stake)+' u  ·  streak '+r.armed.streak+'  ·  bead '+r.armed.leadSide+r.armed.lead;
+  }else if(r.ready){
+    sig.className='signal ready';
+    document.getElementById('sigSt').textContent='READY';
+    document.getElementById('sigBig').textContent='PUSH 9 TO FIRE';
+    document.getElementById('sigMeta').textContent=r.streak.side+' streak '+r.streak.len+' aligns with bead lead '+r.lead.side+r.lead.count;
+  }else{
+    sig.className='signal';
+    document.getElementById('sigSt').textContent='WATCHING';
+    document.getElementById('sigBig').textContent='—';
+    document.getElementById('sigMeta').textContent='Need a Big Road streak ≥2 with matching bead lead, then a 9.';
+  }
+
+  // flip warning
+  const sw=document.getElementById('sigWarn');
+  if(r.armed&&r.armed.flip){ sw.textContent='⚠ SETUP FLIPPED — was '+(r.armed.side==='B'?'PLAYER':'BANKER')+', now '+(r.armed.side==='B'?'BANKER':'PLAYER'); sig.classList.add('flip'); }
+  else sw.textContent='';
+
+  // gauges
+  const gl=document.getElementById('glSide'), glb=document.getElementById('glBar'), gls=document.getElementById('glSub');
+  if(r.lead.side){gl.textContent=r.lead.side+' '+r.lead.count;gl.className='g-side '+r.lead.side;
+    const tot=r.lead.b+r.lead.p||1; glb.innerHTML='<div class="b" style="width:'+(r.lead.b/tot*100)+'%"></div><div class="p" style="width:'+(r.lead.p/tot*100)+'%"></div>';
+    gls.textContent='B '+r.lead.b+' · P '+r.lead.p+' (ties ignored)';}
+  else{gl.textContent='—';gl.className='g-side n';glb.innerHTML='';gls.textContent='no lead yet';}
+  const gs=document.getElementById('gsSide'), gsb=document.getElementById('gsBar'), gss=document.getElementById('gsSub');
+  if(r.streak){gs.textContent=r.streak.side+' ×'+r.streak.len;gs.className='g-side '+r.streak.side;
+    gsb.innerHTML='<div class="'+(r.streak.side==='B'?'b':'p')+'" style="width:'+Math.min(100,r.streak.len/6*100)+'%"></div>';
+    gss.textContent=(r.streak.len>=2?'stripe active (≥2)':'need 2+ for a stripe');}
+  else{gs.textContent='—';gs.className='g-side n';gsb.innerHTML='';gss.textContent='no streak yet';}
+
+  // bead plate
+  const cols=[]; for(let i=0;i<r.bead.length;i++){if(i%6===0)cols.push([]);cols[cols.length-1].push(r.bead[i]);}
+  document.getElementById('bead').innerHTML=(cols.length?cols:[[]]).map(col=>'<div class="bcol">'+
+    col.map(c=>'<div class="bd '+c.o+(c.nine?' nine':'')+'">'+c.o+(c.nine?'<span class="n9">9</span>':'')+'</div>').join('')+'</div>').join('')||'<span style="color:#5a6577;font-size:12px">empty</span>';
+
+  // big road
+  const tieSVG='<span class="tie"><svg viewBox="0 0 26 26" width="26" height="26"><line x1="3" y1="23" x2="23" y2="3" stroke="#12d6a0" stroke-width="2.5"/></svg></span>';
+  document.getElementById('bigroad').innerHTML=r.big.length?r.big.map(col=>'<div class="rcol">'+
+    col.cells.map(cc=>'<div class="rc '+col.side+(cc.nine?' nine':'')+'">'+col.side+
+      (cc.ties?tieSVG+'<span class="tn">'+cc.ties+'</span>':'')+'</div>').join('')+'</div>').join(''):'<span style="color:#5a6577;font-size:12px">empty</span>';
+
+  // kpis
+  const tot=S.wins+S.losses;
+  document.getElementById('kWL').textContent=S.wins+'-'+S.losses;
+  document.getElementById('kWin').textContent=tot?Math.round(S.wins/tot*100)+'%':'—';
+  document.getElementById('kHands').textContent=r.shoeHand;
+  const kp=document.getElementById('kPnl');kp.textContent=(r.net>=0?'+':'')+fmt(r.net);kp.className='v '+(r.net>=0?'pos':'neg');
+
+  // staking comparison
+  const cmpModes=[{k:'flat',n:'Flat 1u',net:S.flatNet,dd:S.flatDD},{k:'ladder',n:'Ladder 1·3·6',net:S.ladNet,dd:S.ladDD},{k:'mart',n:'Martingale',net:S.martNet,dd:S.martDD}];
+  document.getElementById('cmp').innerHTML=cmpModes.map(m=>
+    '<div class="cmpcard'+(m.k===r.mode?' sel':'')+'"><div class="cn">'+m.n+'</div>'+
+    '<div class="cv '+(m.net>=0?'pos':'neg')+'">'+(m.net>=0?'+':'')+fmt(m.net)+'</div>'+
+    '<div class="cd">max drawdown '+fmt(m.dd)+'u</div></div>').join('');
+  const ladCost=r.LAD.reduce((a,b)=>a+b,0), bust=Math.pow(2,r.maxM)-1;
+  document.getElementById('cmpnote').textContent='Worst run so far: '+S.maxLossRun+' losses in a row. Flat rides it at −'+S.maxLossRun+'u; a full '+r.LAD.length+'-loss ladder cycle costs −'+ladCost+'u; a martingale bust costs −'+bust+'u. Same signals — only the staking differs.';
+
+  // hists
+  const draw=(id,items)=>{const mx=Math.max(1,...items.map(x=>x.c));document.getElementById(id).innerHTML=items.map(x=>
+    '<div class="hbar"><div class="hc">'+x.c+'</div><div class="hb '+(x.miss?'miss':'')+'" style="height:'+Math.round(x.c/mx*100)+'%"></div><div class="hn">'+x.n+'</div></div>').join('');};
+  draw('hProg',[0,1,2,3,4,5].map(k=>({n:k===5?'5+':''+k,c:S.runHist[k]||0,miss:k>=3})));
+  draw('hStreak',[2,3,4,5,6].map(k=>({n:k+(k===6?'+':''),c:(function(){let s=0;for(const key in S.streakHist){const kk=+key;if(k===6?kk>=6:kk===k)s+=S.streakHist[key];}return s;})()})));
+  draw('hLead',[1,2,3,4,5,6].map(k=>({n:''+k,c:S.leadHist[k]||0})));
+
+  // log
+  document.getElementById('log').innerHTML=S.log.length?S.log.slice().reverse().slice(0,10).map(e=>
+    '<tr><td>'+e.hand+'</td><td style="color:'+(e.side==='B'?'var(--bank)':'var(--play)')+'">'+e.side+(e.flip?'<span class="logflip">⚠</span>':'')+'</td><td>'+e.bead+'</td><td>×'+e.streak+'</td><td>'+e.step+'</td><td class="'+(e.res==='W'?'rw':'rl')+'">'+(e.res==='W'?'WIN':'LOSS')+'</td></tr>').join('')
+    :'<tr><td colspan="6" style="text-align:center;color:#5a6577">no signals yet</td></tr>';
+
+  document.getElementById('foot').innerHTML='Signal fires on a 9 when the Big Road streak (≥2) and the Bead Plate column lead match. '+
+    'Each signal is now ONE bet on the next hand — your true 1st-bet record. Bet Mode only changes the stake: Flat (1u), Ladder (1·3·6, reset on a win or after 3 losses), or Martingale (1·2·4… to Max Mart). Same signals, three plans — compare nets and drawdowns above. Ties push. New Shoe clears the roads &amp; resets the step, keeps stats.';
+}
+
+function exportCSV(){
+  const log=replay().S.log;
+  const rows=[['hand','bet','bead_lead','streak','step','result','flip'].join(',')]
+    .concat(log.map(e=>[e.hand,e.side,e.bead,e.streak,e.step,e.res,e.flip?1:0].join(',')));
+  const blob=new Blob([rows.join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='stripes_nine.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({events,base:document.getElementById('base').value,maxm:document.getElementById('maxm').value,mode:document.getElementById('mode').value}));}catch(e){}}
+try{const d=JSON.parse(localStorage.getItem(KEY));if(d){events=d.events||[];if(d.base!=null)document.getElementById('base').value=d.base;if(d.maxm!=null)document.getElementById('maxm').value=d.maxm;if(d.mode!=null)document.getElementById('mode').value=d.mode;}}catch(e){}
+render();
+</script>
+</body>
+</html>
