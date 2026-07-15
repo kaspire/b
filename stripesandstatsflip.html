@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STRI9ES · The Nine Signal</title>
+<style>
+:root{
+  --bg0:#05070d;--bg1:#0a0e18;--panel:rgba(255,255,255,.035);--line:rgba(255,255,255,.09);
+  --txt:#e9eef7;--mut:#7a8aa2;--bank:#ff2e4d;--play:#2e7dff;--tie:#12d6a0;--nine:#ffc531;
+  --emer:#2fe08a;--red:#ff5964;--amb:#ffb14e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;color:var(--txt);
+  background:radial-gradient(1200px 700px at 50% -10%,#141c2e 0%,var(--bg1) 45%,var(--bg0) 100%);
+  min-height:100vh;padding:24px 14px 60px;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+.app{max-width:1020px;margin:0 auto;display:flex;flex-direction:column;gap:15px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.brand{font-size:25px;font-weight:900;letter-spacing:3px}
+.brand .n{color:var(--nine);text-shadow:0 0 18px rgba(255,197,49,.5)}
+.sub{color:var(--mut);font-size:12px;letter-spacing:.4px;margin-top:3px}
+.chip{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--nine);border:1px solid rgba(255,197,49,.35);background:rgba(255,197,49,.08);padding:6px 13px;border-radius:20px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;backdrop-filter:blur(4px)}
+.plabel{font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);margin-bottom:12px}
+/* signal */
+.signal{border-radius:18px;padding:22px;text-align:center;border:1px solid var(--line);background:var(--panel);transition:.2s}
+.signal .st{font-size:12px;font-weight:800;letter-spacing:2px;color:var(--mut);text-transform:uppercase}
+.signal .big{font-size:40px;font-weight:900;letter-spacing:1px;margin:6px 0}
+.signal .meta{font-size:14px;color:var(--mut);font-weight:700}
+.signal.armed{animation:glow 1.6s ease-in-out infinite}
+.signal.armed.B{border-color:var(--bank);background:linear-gradient(180deg,rgba(255,46,77,.14),rgba(255,46,77,.03))}
+.signal.armed.B .big{color:var(--bank);text-shadow:0 0 24px rgba(255,46,77,.55)}
+.signal.armed.P{border-color:var(--play);background:linear-gradient(180deg,rgba(46,125,255,.14),rgba(46,125,255,.03))}
+.signal.armed.P .big{color:var(--play);text-shadow:0 0 24px rgba(46,125,255,.55)}
+.signal.armed.flip{border-color:var(--amb);box-shadow:0 0 26px rgba(255,177,78,.22)}
+.signal.ready{border-color:rgba(255,197,49,.5);background:linear-gradient(180deg,rgba(255,197,49,.1),transparent)}
+.signal.ready .big{color:var(--nine)}
+.flipwarn{margin-top:12px;font-size:13px;font-weight:800;letter-spacing:.5px;color:var(--amb)}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(255,197,49,.0)}50%{box-shadow:0 0 34px 2px rgba(255,197,49,.22)}}
+/* gauges */
+.gauges{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.gauge{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.gauge .g-top{display:flex;justify-content:space-between;align-items:center}
+.gauge .g-lab{font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut)}
+.gauge .g-side{font-size:26px;font-weight:900}
+.gauge .g-side.B{color:var(--bank)}.gauge .g-side.P{color:var(--play)}.gauge .g-side.n{color:var(--mut)}
+.gauge .g-bar{height:10px;border-radius:6px;background:rgba(255,255,255,.06);margin-top:12px;overflow:hidden;display:flex}
+.gauge .g-bar .b{background:var(--bank)}.gauge .g-bar .p{background:var(--play)}
+.gauge .g-sub{font-size:12px;color:var(--mut);margin-top:8px;font-weight:600}
+/* roads */
+.roads{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+@media(max-width:760px){.roads{grid-template-columns:1fr}.gauges{grid-template-columns:1fr}}
+.scroll{overflow-x:auto}
+.bead{display:flex;gap:4px}
+.bcol{display:flex;flex-direction:column;gap:4px}
+.bd{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff;position:relative}
+.bd.B{background:var(--bank)}.bd.P{background:var(--play)}.bd.T{background:var(--tie)}
+.bd.nine{box-shadow:0 0 0 2px var(--nine),0 0 10px rgba(255,197,49,.5)}
+.bd .n9{position:absolute;top:-4px;right:-4px;font-size:8px;font-weight:900;color:#111;background:var(--nine);border-radius:50%;width:12px;height:12px;display:flex;align-items:center;justify-content:center}
+.big-road{display:flex;gap:4px;align-items:flex-start;min-height:150px}
+.rcol{display:flex;flex-direction:column;gap:4px}
+.rc{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#fff;position:relative}
+.rc.B{background:var(--bank)}.rc.P{background:var(--play)}
+.rc.nine{box-shadow:0 0 0 2px var(--nine)}
+.rc .tie{position:absolute;inset:-2px;pointer-events:none}
+.rc .tn{position:absolute;bottom:-4px;right:-4px;font-size:8px;font-weight:900;color:var(--tie)}
+/* controls */
+.controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center;justify-content:center}
+.field{display:flex;flex-direction:column;gap:5px;margin-right:6px}
+.field label{font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.field input{font-family:inherit;font-size:16px;font-weight:800;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;padding:8px 10px;color:var(--txt);width:80px;text-align:center}
+button{font-family:inherit;cursor:pointer;font-weight:800;border:none;border-radius:11px;transition:.12s;color:#fff}
+button:active{transform:translateY(1px)}
+.bk{background:linear-gradient(180deg,#ff4258,#e01e37);font-size:17px;padding:13px 22px}
+.pl{background:linear-gradient(180deg,#3d87ff,#1f5ce0);font-size:17px;padding:13px 22px}
+.ti{background:linear-gradient(180deg,#1ce0aa,#0bb98a);font-size:15px;padding:13px 18px;color:#052}
+.nn{background:linear-gradient(180deg,#ffce4d,#f0ab00);font-size:17px;padding:13px 22px;color:#3a2a00;box-shadow:0 0 16px rgba(255,197,49,.35)}
+.mini{background:rgba(255,255,255,.08);font-size:13px;padding:12px 15px;color:var(--txt)}
+.mini.csv{background:linear-gradient(180deg,#2fe08a,#12b56a);color:#052}
+.mini.rst{background:rgba(255,89,100,.18);color:#ff9aa2}
+/* stats */
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:600px){.grid4{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 10px;text-align:center}
+.kpi .k{font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.kpi .v{font-size:25px;font-weight:900;margin-top:4px}
+.kpi .v.pos{color:var(--emer)}.kpi .v.neg{color:var(--red)}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+@media(max-width:760px){.three{grid-template-columns:1fr}}
+.hist{display:flex;gap:6px;align-items:flex-end;height:86px;margin-top:6px}
+.hbar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%}
+.hbar .hb{width:100%;border-radius:5px 5px 0 0;min-height:3px;background:linear-gradient(180deg,#ffd868,#f0ab00)}
+.hbar .hb.miss{background:rgba(255,255,255,.14)}
+.hbar .hn{font-size:10px;font-weight:800;color:var(--mut)}.hbar .hc{font-size:10px;font-weight:800}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+th{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--mut);font-weight:800}
+td{font-weight:600}.rw{color:var(--emer);font-weight:800}.rl{color:var(--red);font-weight:800}
+.logflip{color:var(--amb);margin-left:5px;font-weight:900}
+.foot{font-size:11px;color:var(--mut);line-height:1.6}
+/* ===== stats lab ===== */
+.labtoggle{width:100%;background:rgba(255,197,49,.09);border:1px solid rgba(255,197,49,.3);color:var(--nine);
+  font-size:13px;letter-spacing:1.2px;padding:14px;border-radius:14px;text-transform:uppercase}
+.labtoggle:hover{background:rgba(255,197,49,.15)}
+#lab{display:none;flex-direction:column;gap:15px}
+#lab.on{display:flex}
+.drop{border:1.5px dashed rgba(255,197,49,.35);border-radius:14px;padding:20px;text-align:center;background:rgba(255,197,49,.03)}
+.drop .dl{font-size:13px;color:var(--mut);font-weight:700;margin-bottom:12px}
+.upl{display:inline-block;cursor:pointer;background:linear-gradient(180deg,#ffce4d,#f0ab00);color:#3a2a00;
+  font-weight:800;font-size:14px;padding:11px 20px;border-radius:11px}
+.upl input{display:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;justify-content:center}
+.seg{display:inline-flex;position:relative;background:rgba(255,255,255,.05);border:1px solid var(--line);
+  border-radius:12px;padding:4px;margin-top:16px;gap:2px}
+.seg .sglide{position:absolute;top:4px;bottom:4px;border-radius:9px;background:linear-gradient(180deg,#ffce4d,#f0ab00);
+  transition:left .22s cubic-bezier(.4,0,.2,1),width .22s cubic-bezier(.4,0,.2,1);z-index:0}
+.seg button{position:relative;z-index:1;background:none;border:none;color:var(--mut);font-size:12px;font-weight:800;
+  letter-spacing:.4px;padding:9px 16px;border-radius:9px;transition:color .18s}
+.seg button.on{color:#3a2a00}
+.seglab{font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--mut);margin-top:18px}
+.fchip{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:20px;padding:7px 13px;font-size:11.5px;font-weight:700}
+.fchip b{color:var(--nine)}
+.fchip .x{color:var(--red);cursor:pointer;margin-left:7px;font-weight:900}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+@media(max-width:760px){.two{grid-template-columns:1fr}}
+.cell{padding:6px 4px;text-align:center;border-radius:6px;font-size:11px;font-weight:800}
+.note{font-size:11.5px;color:var(--mut);line-height:1.6;margin-top:12px}
+.note b{color:var(--nine)}
+.warn{color:var(--amb);font-weight:700}
+.na{color:#4b5666}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="head">
+    <div><div class="brand">STRI<span class="n">9</span>ES</div><div class="sub">Big Road stripe + Bead lead + a Nine = the signal.</div></div>
+    <div class="chip">THE NINE SIGNAL</div>
+  </div>
+
+  <div class="signal" id="signal"><div class="st" id="sigSt">WATCHING</div><div class="big" id="sigBig">—</div>
+    <div class="meta" id="sigMeta"></div><div class="flipwarn" id="sigWarn"></div></div>
+
+  <div class="gauges">
+    <div class="gauge"><div class="g-top"><span class="g-lab">Bead lead · this column</span><span class="g-side n" id="glSide">—</span></div>
+      <div class="g-bar" id="glBar"></div><div class="g-sub" id="glSub">no beads yet</div></div>
+    <div class="gauge"><div class="g-top"><span class="g-lab">Big Road · current streak</span><span class="g-side n" id="gsSide">—</span></div>
+      <div class="g-bar" id="gsBar"></div><div class="g-sub" id="gsSub">no streak yet</div></div>
+  </div>
+
+  <div class="roads">
+    <div class="panel"><div class="plabel">Bead Plate</div><div class="scroll"><div class="bead" id="bead"></div></div></div>
+    <div class="panel"><div class="plabel">Big Road</div><div class="scroll"><div class="big-road" id="bigroad"></div></div></div>
+  </div>
+
+  <div class="panel controls">
+    <div class="field"><label>Base</label><input id="base" type="number" min="0.5" step="0.5" value="1" oninput="save();render()"></div>
+    <div class="field"><label>Max Mart</label><input id="maxm" type="number" min="1" max="8" step="1" value="3" oninput="save();render()"></div>
+    <button class="bk" onclick="add('B')">BANKER</button>
+    <button class="pl" onclick="add('P')">PLAYER</button>
+    <button class="ti" onclick="add('T')">TIE</button>
+    <button class="nn" onclick="nine()">Mark 9</button>
+    <button class="mini" onclick="undo()">Undo</button>
+    <button class="mini" onclick="newShoe()">New Shoe</button>
+    <button class="mini csv" onclick="exportCSV()">CSV</button>
+    <button class="mini rst" onclick="resetAll()">Reset</button>
+  </div>
+
+  <div class="grid4">
+    <div class="kpi"><div class="k">Signals W-L</div><div class="v" id="kWL">0-0</div></div>
+    <div class="kpi"><div class="k">Win %</div><div class="v" id="kWin">—</div></div>
+    <div class="kpi"><div class="k">Hands (shoe)</div><div class="v" id="kHands">0</div></div>
+    <div class="kpi"><div class="k">Net (u)</div><div class="v" id="kPnl">0</div></div>
+  </div>
+
+  <div class="three">
+    <div class="panel"><div class="plabel">Bets until win</div><div class="hist" id="hProg"></div></div>
+    <div class="panel"><div class="plabel">Streak length at signal</div><div class="hist" id="hStreak"></div></div>
+    <div class="panel"><div class="plabel">Bead lead at signal</div><div class="hist" id="hLead"></div></div>
+  </div>
+
+  <div class="panel"><div class="plabel">Signal log</div><div class="scroll"><table>
+    <thead><tr><th>Hand</th><th>Bet</th><th>Bead</th><th>Streak</th><th>Prog</th><th>Result</th></tr></thead>
+    <tbody id="log"></tbody></table></div></div>
+
+  <button class="labtoggle" id="labBtn" onclick="toggleLab()">▸ Open Stats Lab</button>
+
+  <div id="lab">
+    <div class="panel">
+      <div class="plabel">Data sources · load your CSV exports</div>
+      <div class="drop">
+        <div class="dl">Drop in up to 6 CSV exports (bet 1 – 6). Re-loading the same filename replaces it.</div>
+        <label class="upl">Choose CSV files<input type="file" id="files" multiple accept=".csv,.txt" onchange="loadFiles(event)"></label>
+        <button class="mini" style="margin-left:8px" onclick="useCurrent()">+ Current board</button>
+        <button class="mini rst" style="margin-left:8px" onclick="clearLab()">Clear</button>
+        <div class="chips" id="chips"></div>
+        <div class="seglab">Setup filter</div>
+        <div class="seg" id="seg">
+          <div class="sglide" id="sglide"></div>
+          <button id="f-all" class="on" onclick="setFilt('all')">All signals</button>
+          <button id="f-same" onclick="setFilt('same')">No flips</button>
+          <button id="f-flip" onclick="setFilt('flip')">Flips only</button>
+        </div>
+        <div class="note" id="filtNote" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div class="grid4" id="labKpis"></div>
+
+    <div class="panel">
+      <div class="plabel">Per bet · does a deeper bet actually win more?</div>
+      <div class="scroll"><table>
+        <thead><tr><th>Bet</th><th>Reached</th><th>Won here</th><th>Win % at this bet</th><th>Cum. resolved</th><th>±95%</th></tr></thead>
+        <tbody id="tProg"></tbody></table></div>
+      <div class="note" id="progNote"></div>
+    </div>
+
+    <div class="panel">
+      <div class="plabel">Depth economics · what each cap would have paid</div>
+      <div class="scroll"><table>
+        <thead><tr><th>Max Mart</th><th>Net (u)</th><th>Max drawdown</th><th>Bust cost</th><th>Status</th></tr></thead>
+        <tbody id="tDepth"></tbody></table></div>
+      <div class="note" id="depthNote"></div>
+    </div>
+
+    <div class="two">
+      <div class="panel"><div class="plabel">Bead lead at signal</div>
+        <div class="scroll"><table><thead><tr><th>Lead</th><th>W-L</th><th>Win %</th><th>n</th></tr></thead><tbody id="tLead"></tbody></table></div></div>
+      <div class="panel"><div class="plabel">Big Road streak at signal</div>
+        <div class="scroll"><table><thead><tr><th>Streak</th><th>W-L</th><th>Win %</th><th>n</th></tr></thead><tbody id="tStreak"></tbody></table></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="plabel">Bead × Big Road · win % cross-tab</div>
+      <div class="scroll" id="cross"></div>
+      <div class="note">Green = above 50%, red = below. Small cells (n&lt;10) are noise — the number in brackets is the sample.</div>
+    </div>
+
+    <div class="two">
+      <div class="panel"><div class="plabel">Side bet on</div>
+        <div class="scroll"><table><thead><tr><th>Side</th><th>W-L</th><th>Win %</th><th>Break-even needs</th></tr></thead><tbody id="tSide"></tbody></table></div></div>
+      <div class="panel"><div class="plabel">Setup flip (⚠) vs same-side</div>
+        <div class="scroll"><table><thead><tr><th>Type</th><th>W-L</th><th>Win %</th><th>n</th></tr></thead><tbody id="tFlip"></tbody></table></div></div>
+    </div>
+
+    <div class="panel"><div class="plabel">Honest read</div><div class="note" id="verdict"></div></div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const KEY='stripesNine_v1';
+let events=[], DS=[], LABFILT='all';
+function getBase(){const v=parseFloat(document.getElementById('base').value);return isNaN(v)||v<=0?1:v;}
+function getMaxMart(){const v=parseInt(document.getElementById('maxm').value);return isNaN(v)||v<1?3:Math.min(v,8);}
+function add(o){events.push({o,nine:false});save();render();}
+function nine(){for(let i=events.length-1;i>=0;i--){if(events[i].shoe)break;if(events[i].o==='B'||events[i].o==='P'){events[i].nine=!events[i].nine;break;}}save();render();}
+function undo(){events.pop();save();render();}
+function newShoe(){events.push({shoe:true});save();render();}
+function resetAll(){if(confirm('Clear all shoes and stats?')){events=[];save();render();}}
+function fmt(n){return (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+function pc(w,t){return t?Math.round(w/t*1000)/10:0;}
+
+function beadLead(cells){
+  const n=cells.length; if(!n)return{side:null,b:0,p:0};
+  const cs=Math.floor((n-1)/6)*6; let b=0,p=0;
+  for(let i=cs;i<n;i++){if(cells[i].o==='B')b++;else if(cells[i].o==='P')p++;}
+  return{side:b>p?'B':p>b?'P':null,b,p,count:Math.max(b,p)};
+}
+
+function replay(){
+  const base=getBase(), maxM=getMaxMart();
+  const S={prog:new Array(maxM).fill(0),bust:0,wins:0,pnl:0,log:[],streakHist:{},leadHist:{},flipW:0,flipL:0};
+  let hands=0,shoeHand=0;
+  let bead=[],big=[],armed=null,lastSigSide=null;
+  function reset(){bead=[];big=[];armed=null;lastSigSide=null;shoeHand=0;}
+  for(const ev of events){
+    if(ev.shoe){reset();continue;}
+    hands++;shoeHand++;
+    const o=ev.o,nine=ev.nine;
+    if(armed){
+      if(o==='T'){/* push */}
+      else if(o===armed.side){
+        S.wins++;S.prog[armed.prog-1]++;S.pnl+=base;
+        S.streakHist[armed.streak]=(S.streakHist[armed.streak]||0)+1;
+        S.leadHist[armed.lead]=(S.leadHist[armed.lead]||0)+1;
+        S.log.push({hand:shoeHand,side:armed.side,bead:armed.leadSide+armed.lead,streak:armed.streak,prog:armed.prog,res:'W',flip:armed.flip});
+        if(armed.flip)S.flipW++; lastSigSide=armed.side; armed=null;
+      }else{
+        if(armed.prog>=maxM){S.bust++;S.pnl-=(Math.pow(2,maxM)-1)*base;
+          S.streakHist[armed.streak]=(S.streakHist[armed.streak]||0)+1;S.leadHist[armed.lead]=(S.leadHist[armed.lead]||0)+1;
+          S.log.push({hand:shoeHand,side:armed.side,bead:armed.leadSide+armed.lead,streak:armed.streak,prog:maxM,res:'L',flip:armed.flip});
+          if(armed.flip)S.flipL++; lastSigSide=armed.side; armed=null;}
+        else armed.prog++;
+      }
+    }
+    bead.push({o,nine});
+    if(o!=='T'){
+      if(big.length&&big[big.length-1].side===o){big[big.length-1].len++;big[big.length-1].cells.push({nine,ties:0});}
+      else big.push({side:o,len:1,cells:[{nine,ties:0}]});
+    }else{ if(big.length){const c=big[big.length-1].cells;c[c.length-1].ties++;} }
+    if(!armed&&o!=='T'&&nine){
+      const bs=big.length?big[big.length-1]:null;
+      if(bs&&bs.len>=2){ const L=beadLead(bead);
+        if(L.side===bs.side){ armed={side:bs.side,prog:1,streak:bs.len,lead:L.count,leadSide:L.side,
+          flip:(lastSigSide!==null&&bs.side!==lastSigSide),prevSide:lastSigSide}; }
+      }
+    }
+  }
+  const L=beadLead(bead), bs=big.length?big[big.length-1]:null;
+  const ready=(!armed&&bs&&bs.len>=2&&L.side===bs.side);
+  return{S,bead,big,armed,hands,shoeHand,base,maxM,lead:L,streak:bs,ready};
+}
+
+function render(){
+  const r=replay(),S=r.S;
+  const sig=document.getElementById('signal'), warn=document.getElementById('sigWarn');
+  if(r.armed){
+    const nm=r.armed.side==='B'?'BANKER':'PLAYER';
+    sig.className='signal armed '+r.armed.side+(r.armed.flip?' flip':'');
+    document.getElementById('sigSt').textContent='BET NOW · MARTINGALE '+r.armed.prog+'/'+r.maxM;
+    document.getElementById('sigBig').textContent=nm;
+    document.getElementById('sigMeta').textContent=fmt(r.base*Math.pow(2,r.armed.prog-1))+' u  ·  streak '+r.armed.streak+'  ·  bead '+r.armed.leadSide+r.armed.lead;
+    warn.textContent=r.armed.flip?('⚠ SETUP FLIPPED — was '+(r.armed.prevSide==='B'?'BANKER':'PLAYER')+', now '+nm):'';
+  }else if(r.ready){
+    sig.className='signal ready';
+    document.getElementById('sigSt').textContent='READY';
+    document.getElementById('sigBig').textContent='PUSH 9 TO FIRE';
+    document.getElementById('sigMeta').textContent=r.streak.side+' streak '+r.streak.len+' aligns with bead lead '+r.lead.side+r.lead.count;
+    warn.textContent='';
+  }else{
+    sig.className='signal';
+    document.getElementById('sigSt').textContent='WATCHING';
+    document.getElementById('sigBig').textContent='—';
+    document.getElementById('sigMeta').textContent='Need a Big Road streak ≥2 with matching bead lead, then a 9.';
+    warn.textContent='';
+  }
+
+  const gl=document.getElementById('glSide'), glb=document.getElementById('glBar'), gls=document.getElementById('glSub');
+  if(r.lead.side){gl.textContent=r.lead.side+' '+r.lead.count;gl.className='g-side '+r.lead.side;
+    const tot=r.lead.b+r.lead.p||1; glb.innerHTML='<div class="b" style="width:'+(r.lead.b/tot*100)+'%"></div><div class="p" style="width:'+(r.lead.p/tot*100)+'%"></div>';
+    gls.textContent='B '+r.lead.b+' · P '+r.lead.p+' (ties ignored)';}
+  else{gl.textContent='—';gl.className='g-side n';glb.innerHTML='';gls.textContent='no lead yet';}
+  const gs=document.getElementById('gsSide'), gsb=document.getElementById('gsBar'), gss=document.getElementById('gsSub');
+  if(r.streak){gs.textContent=r.streak.side+' ×'+r.streak.len;gs.className='g-side '+r.streak.side;
+    gsb.innerHTML='<div class="'+(r.streak.side==='B'?'b':'p')+'" style="width:'+Math.min(100,r.streak.len/6*100)+'%"></div>';
+    gss.textContent=(r.streak.len>=2?'stripe active (≥2)':'need 2+ for a stripe');}
+  else{gs.textContent='—';gs.className='g-side n';gsb.innerHTML='';gss.textContent='no streak yet';}
+
+  const cols=[]; for(let i=0;i<r.bead.length;i++){if(i%6===0)cols.push([]);cols[cols.length-1].push(r.bead[i]);}
+  document.getElementById('bead').innerHTML=(cols.length?cols:[[]]).map(col=>'<div class="bcol">'+
+    col.map(c=>'<div class="bd '+c.o+(c.nine?' nine':'')+'">'+c.o+(c.nine?'<span class="n9">9</span>':'')+'</div>').join('')+'</div>').join('')||'<span style="color:#5a6577;font-size:12px">empty</span>';
+
+  const tieSVG='<span class="tie"><svg viewBox="0 0 26 26" width="26" height="26"><line x1="3" y1="23" x2="23" y2="3" stroke="#12d6a0" stroke-width="2.5"/></svg></span>';
+  document.getElementById('bigroad').innerHTML=r.big.length?r.big.map(col=>'<div class="rcol">'+
+    col.cells.map(cc=>'<div class="rc '+col.side+(cc.nine?' nine':'')+'">'+col.side+
+      (cc.ties?tieSVG+'<span class="tn">'+cc.ties+'</span>':'')+'</div>').join('')+'</div>').join(''):'<span style="color:#5a6577;font-size:12px">empty</span>';
+
+  const tot=S.wins+S.bust;
+  document.getElementById('kWL').textContent=S.wins+'-'+S.bust;
+  document.getElementById('kWin').textContent=tot?Math.round(S.wins/tot*100)+'%':'—';
+  document.getElementById('kHands').textContent=r.shoeHand;
+  const kp=document.getElementById('kPnl');kp.textContent=(S.pnl>=0?'+':'')+fmt(S.pnl);kp.className='v '+(S.pnl>=0?'pos':'neg');
+
+  const draw=(id,items)=>{const mx=Math.max(1,...items.map(x=>x.c));document.getElementById(id).innerHTML=items.map(x=>
+    '<div class="hbar"><div class="hc">'+x.c+'</div><div class="hb '+(x.miss?'miss':'')+'" style="height:'+Math.round(x.c/mx*100)+'%"></div><div class="hn">'+x.n+'</div></div>').join('');};
+  const progItems=[]; for(let i=1;i<=r.maxM;i++)progItems.push({n:''+i,c:S.prog[i-1]||0}); progItems.push({n:'Loss',c:S.bust,miss:1});
+  draw('hProg',progItems);
+  draw('hStreak',[2,3,4,5,6].map(k=>({n:k+(k===6?'+':''),c:(function(){let s=0;for(const key in S.streakHist){const kk=+key;if(k===6?kk>=6:kk===k)s+=S.streakHist[key];}return s;})()})));
+  draw('hLead',[1,2,3,4,5,6].map(k=>({n:''+k,c:S.leadHist[k]||0})));
+
+  document.getElementById('log').innerHTML=S.log.length?S.log.slice().reverse().slice(0,10).map(e=>
+    '<tr><td>'+e.hand+'</td><td style="color:'+(e.side==='B'?'var(--bank)':'var(--play)')+'">'+e.side+(e.flip?'<span class="logflip">⚠</span>':'')+'</td><td>'+e.bead+'</td><td>×'+e.streak+'</td><td>'+e.prog+'</td><td class="'+(e.res==='W'?'rw':'rl')+'">'+(e.res==='W'?'WIN':'LOSS')+'</td></tr>').join('')
+    :'<tr><td colspan="6" style="text-align:center;color:#5a6577">no signals yet</td></tr>';
+
+  document.getElementById('foot').innerHTML='Signal fires on a 9 when the Big Road streak (≥2) and the Bead Plate column lead point the same way. '+
+    'Bet that side to continue, Martingale to Max Mart, then a full loss. ⚠ marks a setup flip (signal armed on the opposite side to the last one). '+
+    'Ties are beads on the plate + a diagonal on the road, ignored for lead &amp; betting. New Shoe clears the roads, keeps stats.';
+}
+
+function exportCSV(){
+  const log=replay().S.log;
+  const rows=[['hand','bet','bead_lead','streak','prog','result','flip'].join(',')]
+    .concat(log.map(e=>[e.hand,e.side,e.bead,e.streak,e.prog,e.res,e.flip?1:0].join(',')));
+  const blob=new Blob([rows.join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='stripes_nine.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+/* ================= STATS LAB ================= */
+function parseCSV(text,name){
+  const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2)return null;
+  const head=lines[0].toLowerCase().split(',').map(s=>s.trim());
+  const ix=k=>head.indexOf(k);
+  const iHand=ix('hand'),iBet=ix('bet'),iBead=ix('bead_lead'),iStk=ix('streak'),iRes=ix('result'),iFlip=ix('flip');
+  const iProg=ix('prog')>=0?ix('prog'):ix('step');
+  if(iRes<0||iProg<0)return null;
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    const c=lines[i].split(',').map(s=>s.trim());
+    if(c.length<3)continue;
+    const bd=iBead>=0?(c[iBead]||''):'';
+    rows.push({hand:parseInt(c[iHand])||0,bet:(iBet>=0?c[iBet]:'')||'',
+      leadSide:bd?bd[0]:'',lead:parseInt(bd.slice(1))||0,
+      streak:parseInt((c[iStk]||'').replace(/[^0-9]/g,''))||0,
+      prog:parseInt(c[iProg])||1,
+      res:(c[iRes]||'').toUpperCase().charAt(0)==='W'?'W':'L',
+      flip:iFlip>=0&&c[iFlip]==='1'});
+  }
+  return rows.length?{name,rows,hasFlip:iFlip>=0}:null;
+}
+function analyze(rows){
+  let w=0,l=0,maxW=0,maxL=0,cw=0,cl=0,maxProg=1;
+  const reached={},wonAt={},lead={},streak={},side={B:{w:0,l:0},P:{w:0,l:0}},cross={},flip={w:0,l:0},same={w:0,l:0};
+  rows.forEach(r=>{
+    if(r.res==='W'){w++;cw++;cl=0;if(cw>maxW)maxW=cw;}else{l++;cl++;cw=0;if(cl>maxL)maxL=cl;}
+    for(let k=1;k<=r.prog;k++)reached[k]=(reached[k]||0)+1;
+    if(r.res==='W')wonAt[r.prog]=(wonAt[r.prog]||0)+1;
+    if(r.prog>maxProg)maxProg=r.prog;
+    (lead[r.lead]=lead[r.lead]||{w:0,l:0})[r.res==='W'?'w':'l']++;
+    (streak[r.streak]=streak[r.streak]||{w:0,l:0})[r.res==='W'?'w':'l']++;
+    if(side[r.bet])side[r.bet][r.res==='W'?'w':'l']++;
+    const k=r.streak+'|'+r.lead;
+    (cross[k]=cross[k]||{w:0,l:0})[r.res==='W'?'w':'l']++;
+    (r.flip?flip:same)[r.res==='W'?'w':'l']++;
+  });
+  return{w,l,n:w+l,maxW,maxL,reached,wonAt,lead,streak,side,cross,flip,same,maxProg};
+}
+function depthEcon(rows,N){
+  let net=0,peak=0,dd=0,valid=true;
+  rows.forEach(r=>{
+    let d=0;
+    if(r.res==='W'){ d=(r.prog<=N)?1:-(Math.pow(2,N)-1); }
+    else { if(N<=r.prog) d=-(Math.pow(2,N)-1); else {valid=false;} }
+    net+=d;peak=Math.max(peak,net);dd=Math.max(dd,peak-net);
+  });
+  return{net,dd,valid};
+}
+function labRows(){
+  const all=DS.reduce((a,d)=>a.concat(d.rows),[]);
+  if(LABFILT==='same')return all.filter(r=>!r.flip);
+  if(LABFILT==='flip')return all.filter(r=>r.flip);
+  return all;
+}
+function setFilt(f){
+  LABFILT=f;
+  ['all','same','flip'].forEach(k=>document.getElementById('f-'+k).classList.toggle('on',k===f));
+  slideSeg(); renderLab();
+}
+function slideSeg(){
+  const btn=document.getElementById('f-'+LABFILT), g=document.getElementById('sglide');
+  if(!btn||!g)return;
+  g.style.left=btn.offsetLeft+'px'; g.style.width=btn.offsetWidth+'px';
+}
+function toggleLab(){
+  const l=document.getElementById('lab'), on=!l.classList.contains('on');
+  l.classList.toggle('on',on);
+  document.getElementById('labBtn').textContent=on?'▾ Close Stats Lab':'▸ Open Stats Lab';
+  if(on)renderLab();
+}
+function loadFiles(e){
+  const files=Array.prototype.slice.call(e.target.files,0,6);
+  let pending=files.length; if(!pending)return;
+  files.forEach(f=>{
+    const rd=new FileReader();
+    rd.onload=function(){ const d=parseCSV(String(rd.result),f.name);
+      if(d){DS=DS.filter(x=>x.name!==d.name); DS.push(d); if(DS.length>6)DS=DS.slice(-6);}
+      if(--pending===0)renderLab(); };
+    rd.onerror=function(){ if(--pending===0)renderLab(); };
+    rd.readAsText(f);
+  });
+  e.target.value='';
+}
+function useCurrent(){
+  const log=replay().S.log;
+  if(!log.length){alert('No signals on the board yet.');return;}
+  const rows=log.map(e=>({hand:e.hand,bet:e.side,leadSide:e.bead.charAt(0),lead:parseInt(e.bead.slice(1))||0,
+    streak:e.streak,prog:e.prog,res:e.res,flip:!!e.flip}));
+  DS=DS.filter(x=>x.name!=='current board'); DS.push({name:'current board',rows,hasFlip:true}); renderLab();
+}
+function dropDS(n){DS=DS.filter(x=>x.name!==n);renderLab();}
+function clearLab(){DS=[];renderLab();}
+
+function renderLab(){
+  const rows=labRows(), allRows=DS.reduce((a,d)=>a.concat(d.rows),[]);
+  const noFlipData=DS.length&&DS.every(d=>!d.hasFlip);
+  const fN=document.getElementById('filtNote');
+  const nFlip=allRows.filter(r=>r.flip).length;
+  if(!DS.length) fN.innerHTML='';
+  else if(noFlipData) fN.innerHTML='<span class="warn">These exports have no flip column</span> — they predate the ⚠ warning, so every row counts as same-side. Re-export from this board to use the filter.';
+  else fN.innerHTML='Loaded: <b>'+allRows.length+'</b> signals · <b>'+nFlip+'</b> flipped, <b>'+(allRows.length-nFlip)+'</b> same-side. '+
+    (LABFILT==='all'?'Showing everything below.':LABFILT==='same'?'Showing <b>same-side only</b> — the deeper bets will move most.':'Showing <b>flipped only</b>.')+
+    (LABFILT!=='all'?' <span class="warn">Careful:</span> filtering a subset after seeing the results is how noise gets promoted to an edge. Judge a split by whether it holds on new data, not on this one.':'');
+  slideSeg();
+  document.getElementById('chips').innerHTML=DS.length?DS.map(d=>{
+    const a=analyze(d.rows);
+    return '<span class="fchip">'+d.name+' · <b>'+a.n+'</b> · '+a.w+'-'+a.l+' · '+pc(a.w,a.n)+'%'+
+      '<span class="x" onclick="dropDS(\''+d.name.replace(/'/g,"\\'")+'\')">×</span></span>';
+  }).join(''):'<span style="color:#5a6577;font-size:12px">no data loaded</span>';
+
+  if(!rows.length){
+    document.getElementById('labKpis').innerHTML='';
+    const msg=DS.length?'no signals match this filter':'load a CSV to begin';
+    ['tProg','tDepth','tLead','tStreak','tSide','tFlip'].forEach(id=>document.getElementById(id).innerHTML='<tr><td colspan="6" style="text-align:center;color:#5a6577">'+msg+'</td></tr>');
+    document.getElementById('cross').innerHTML='';
+    document.getElementById('verdict').textContent=DS.length?'No signals match the current filter.':'Load your exports (or the current board) to run the analysis.';
+    document.getElementById('progNote').textContent=''; document.getElementById('depthNote').textContent='';
+    return;
+  }
+  const A=analyze(rows), n=A.n, wob=n?Math.round(98/Math.sqrt(n)*10)/10:0;
+
+  document.getElementById('labKpis').innerHTML=
+    '<div class="kpi"><div class="k">Signals</div><div class="v">'+n+'</div></div>'+
+    '<div class="kpi"><div class="k">W - L</div><div class="v">'+A.w+'-'+A.l+'</div></div>'+
+    '<div class="kpi"><div class="k">Win % (±'+wob+')</div><div class="v '+(pc(A.w,n)>=50?'pos':'neg')+'">'+pc(A.w,n)+'%</div></div>'+
+    '<div class="kpi"><div class="k">Max win / loss run</div><div class="v">'+A.maxW+' / '+A.maxL+'</div></div>';
+
+  // per bet
+  let cum=0, prog='';
+  for(let k=1;k<=Math.max(6,A.maxProg);k++){
+    const rc=A.reached[k]||0, wa=A.wonAt[k]||0;
+    if(!rc && k>A.maxProg) continue;
+    cum+=wa;
+    const cw=rc?pc(wa,rc):0, wb=rc?Math.round(98/Math.sqrt(rc)*10)/10:0;
+    prog+='<tr><td>Bet '+k+'</td><td>'+rc+'</td><td>'+wa+'</td><td class="'+(rc?(cw>=50?'rw':'rl'):'na')+'">'+(rc?cw+'%':'—')+'</td>'+
+      '<td>'+pc(cum,n)+'%</td><td class="na">'+(rc?'±'+wb:'—')+'</td></tr>';
+  }
+  document.getElementById('tProg').innerHTML=prog;
+  const b1=A.reached[1]?pc(A.wonAt[1]||0,A.reached[1]):0, b2=A.reached[2]?pc(A.wonAt[2]||0,A.reached[2]):null;
+  document.getElementById('progNote').innerHTML='This is the honest test of the progression. <b>Win % at this bet</b> = of the signals that reached bet k, how many won there. '+
+    'If the shoe has no memory, every row sits near 50% and the deeper bets are no better — they just cost more. '+
+    (b2!==null?('Yours: bet 1 = <b>'+b1+'%</b>, bet 2 = <b>'+b2+'%</b>.'):'')+' The ±95% column is how far each row could wobble from luck alone.';
+
+  // depth economics
+  let dep='', minCap=Math.min.apply(null,rows.map(r=>r.res==='L'?r.prog:99));
+  for(let N=1;N<=6;N++){
+    const e=depthEcon(rows,N), bust=Math.pow(2,N)-1;
+    dep+='<tr><td>Max '+N+'</td>'+
+      (e.valid?('<td class="'+(e.net>=0?'rw':'rl')+'">'+(e.net>=0?'+':'')+e.net+'</td><td>−'+e.dd+'</td>'):'<td class="na">—</td><td class="na">—</td>')+
+      '<td>−'+bust+'u</td><td class="'+(e.valid?'':'warn')+'">'+(e.valid?'computed':'data truncated')+'</td></tr>';
+  }
+  document.getElementById('tDepth').innerHTML=dep;
+  document.getElementById('depthNote').innerHTML='What each Max Mart cap <i>would have</i> returned on these exact signals, in base units. '+
+    'Rows marked <span class="warn">data truncated</span> can\'t be computed: your log busted before that depth, so nobody knows if a deeper bet would have won. '+
+    'Note the trade — every extra step buys a higher win % and a <b>bigger</b> bust ('+'−1, −3, −7, −15, −31, −63u'+').';
+
+  // lead / streak
+  const leadRows=Object.keys(A.lead).map(Number).sort((a,b)=>a-b).map(k=>{
+    const v=A.lead[k], t=v.w+v.l;
+    return '<tr><td>Lead '+k+'</td><td>'+v.w+'-'+v.l+'</td><td class="'+(pc(v.w,t)>=50?'rw':'rl')+'">'+pc(v.w,t)+'%</td><td class="'+(t<10?'na':'')+'">'+t+'</td></tr>';}).join('');
+  document.getElementById('tLead').innerHTML=leadRows;
+  const stkRows=Object.keys(A.streak).map(Number).sort((a,b)=>a-b).map(k=>{
+    const v=A.streak[k], t=v.w+v.l;
+    return '<tr><td>×'+k+'</td><td>'+v.w+'-'+v.l+'</td><td class="'+(pc(v.w,t)>=50?'rw':'rl')+'">'+pc(v.w,t)+'%</td><td class="'+(t<10?'na':'')+'">'+t+'</td></tr>';}).join('');
+  document.getElementById('tStreak').innerHTML=stkRows;
+
+  // cross-tab
+  const stks=Object.keys(A.streak).map(Number).sort((a,b)=>a-b);
+  const lds=Object.keys(A.lead).map(Number).sort((a,b)=>a-b);
+  let ct='<table><thead><tr><th>Streak ＼ Lead</th>'+lds.map(l=>'<th style="text-align:center">'+l+'</th>').join('')+'</tr></thead><tbody>';
+  stks.forEach(s=>{
+    ct+='<tr><td>×'+s+'</td>';
+    lds.forEach(l=>{
+      const v=A.cross[s+'|'+l];
+      if(!v){ct+='<td class="na" style="text-align:center">·</td>';return;}
+      const t=v.w+v.l, p=pc(v.w,t), a=Math.min(.34,Math.abs(p-50)/100);
+      const bg=p>=50?'rgba(47,224,138,'+a+')':'rgba(255,89,100,'+a+')';
+      ct+='<td style="text-align:center"><div class="cell" style="background:'+bg+'">'+p+'%<br><span style="opacity:.6;font-weight:600">('+t+')</span></div></td>';
+    });
+    ct+='</tr>';
+  });
+  ct+='</tbody></table>';
+  document.getElementById('cross').innerHTML=ct;
+
+  // side
+  document.getElementById('tSide').innerHTML=['B','P'].map(s=>{
+    const v=A.side[s], t=v.w+v.l;
+    return '<tr><td>'+(s==='B'?'Banker':'Player')+'</td><td>'+v.w+'-'+v.l+'</td><td class="'+(pc(v.w,t)>=50?'rw':'rl')+'">'+(t?pc(v.w,t)+'%':'—')+'</td><td>'+(s==='B'?'51.3% (5% comm)':'50.0%')+'</td></tr>';
+  }).join('');
+
+  // flip — always from the full set so the comparison stays visible under any filter
+  const AF=analyze(allRows);
+  const fl=AF.flip, sm=AF.same, ft=fl.w+fl.l, st=sm.w+sm.l;
+  document.getElementById('tFlip').innerHTML=
+    '<tr><td>⚠ Flipped setup</td><td>'+fl.w+'-'+fl.l+'</td><td class="'+(pc(fl.w,ft)>=50?'rw':'rl')+'">'+(ft?pc(fl.w,ft)+'%':'—')+'</td><td class="'+(ft<10?'na':'')+'">'+ft+'</td></tr>'+
+    '<tr><td>Same side</td><td>'+sm.w+'-'+sm.l+'</td><td class="'+(pc(sm.w,st)>=50?'rw':'rl')+'">'+(st?pc(sm.w,st)+'%':'—')+'</td><td class="'+(st<10?'na':'')+'">'+st+'</td></tr>';
+
+  // verdict
+  const win=pc(A.w,n);
+  const lo=Math.round(Math.max(0,win-wob)*10)/10, hi=Math.round(Math.min(100,win+wob)*10)/10;
+  const v=[];
+  v.push('Sample: <b>'+n+' signals</b>. Win rate <b>'+win+'%</b>, true value likely between <b>'+lo+'%</b> and <b>'+hi+'%</b> (±'+wob+' points of pure luck at this sample size).');
+  if(n<150) v.push('<span class="warn">That range is far too wide to mean anything yet</span> — a warm coin produces numbers like this all the time. Target ~150–300 flat signals before trusting any figure on this page.');
+  else if(lo>51.3) v.push('The whole range sits above the 51.3% Banker break-even. <b>That is a real result</b> — worth digging into why.');
+  else if(hi<50) v.push('The whole range sits below 50%. The signal is <span class="warn">worse than a coin</span> on this data.');
+  else v.push('The range still includes 50%, so this is <span class="warn">not yet distinguishable from chance</span>.');
+  v.push('Remember what the columns mean: <b>bet-1 win %</b> is the only number a flat bettor cares about. Every deeper row is the martingale converting a loss into a later win — it raises Win % by design and never changes the odds of the next hand.');
+  document.getElementById('verdict').innerHTML=v.join('<br><br>');
+}
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify({events,base:document.getElementById('base').value,maxm:document.getElementById('maxm').value}));}catch(e){}}
+try{const d=JSON.parse(localStorage.getItem(KEY));if(d){events=d.events||[];if(d.base!=null)document.getElementById('base').value=d.base;if(d.maxm!=null)document.getElementById('maxm').value=d.maxm;}}catch(e){}
+render();
+</script>
+</body>
+</html>
