@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STRI9ES TERMINATOR · Research Lab</title>
+<style>
+:root{
+  --bg0:#05070d;--bg1:#0a0e18;--panel:rgba(255,255,255,.035);--line:rgba(255,255,255,.09);
+  --txt:#e9eef7;--mut:#7a8aa2;--bank:#ff2e4d;--play:#2e7dff;--tie:#12d6a0;--nine:#ffc531;
+  --emer:#2fe08a;--red:#ff5964;--amb:#ffb14e;--dim:#4b5666;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;color:var(--txt);
+  background:radial-gradient(1200px 700px at 50% -10%,#141c2e 0%,var(--bg1) 45%,var(--bg0) 100%);
+  min-height:100vh;padding:24px 14px 60px;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+.app{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:15px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:12px;border-bottom:1px solid var(--line);gap:12px;flex-wrap:wrap}
+.brand{font-size:25px;font-weight:900;letter-spacing:3px}
+.brand .n{color:var(--nine);text-shadow:0 0 18px rgba(255,197,49,.5)}
+.brand .t{color:var(--mut);font-weight:800;letter-spacing:2px;font-size:19px}
+.sub{color:var(--mut);font-size:12px;letter-spacing:.4px;margin-top:3px}
+.chip{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--nine);border:1px solid rgba(255,197,49,.35);background:rgba(255,197,49,.08);padding:6px 13px;border-radius:20px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;backdrop-filter:blur(4px)}
+.plabel{font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);margin-bottom:12px}
+.plabel span{color:var(--dim);letter-spacing:.2px;text-transform:none;font-weight:600}
+
+/* ---- signal ---- */
+.signal{border-radius:18px;padding:22px;text-align:center;border:1px solid var(--line);background:var(--panel);transition:.2s}
+.signal .st{font-size:12px;font-weight:800;letter-spacing:2px;color:var(--mut);text-transform:uppercase}
+.signal .big{font-size:40px;font-weight:900;letter-spacing:1px;margin:6px 0}
+.signal .meta{font-size:14px;color:var(--mut);font-weight:700}
+.signal.armed{animation:glow 1.6s ease-in-out infinite}
+.signal.armed.B{border-color:var(--bank);background:linear-gradient(180deg,rgba(255,46,77,.14),rgba(255,46,77,.03))}
+.signal.armed.B .big{color:var(--bank);text-shadow:0 0 24px rgba(255,46,77,.55)}
+.signal.armed.P{border-color:var(--play);background:linear-gradient(180deg,rgba(46,125,255,.14),rgba(46,125,255,.03))}
+.signal.armed.P .big{color:var(--play);text-shadow:0 0 24px rgba(46,125,255,.55)}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(255,197,49,0)}50%{box-shadow:0 0 34px 2px rgba(255,197,49,.22)}}
+
+/* ---- roads ---- */
+.roads{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+@media(max-width:860px){.roads{grid-template-columns:1fr}}
+.scroll{overflow-x:auto;padding-bottom:4px}
+.rgrid{display:grid;grid-auto-flow:column;gap:3px;grid-template-rows:repeat(6,30px);justify-content:start}
+.bd{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:13px;color:#fff;position:relative}
+.bd.B{background:var(--bank)}.bd.P{background:var(--play)}.bd.T{background:var(--tie);color:#052}
+.bd.hot{box-shadow:0 0 0 2px var(--nine),0 0 11px rgba(255,197,49,.55)}
+.bd .pp{position:absolute;top:0;left:0;width:8px;height:8px;border-radius:50%;background:var(--play);border:1px solid rgba(0,0,0,.4)}
+.bd .bp{position:absolute;bottom:0;right:0;width:8px;height:8px;border-radius:50%;background:var(--bank);border:1px solid rgba(0,0,0,.4)}
+.bgrid{display:grid;gap:3px;grid-template-rows:repeat(6,26px);justify-content:start;min-height:174px}
+.rc{width:26px;height:26px;border-radius:50%;border:2.5px solid;display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:10px;position:relative}
+.rc.B{border-color:var(--bank);color:var(--bank)}
+.rc.P{border-color:var(--play);color:var(--play)}
+.rc.hot{background:rgba(255,197,49,.16);box-shadow:0 0 0 1.5px var(--nine)}
+.rc .tn{position:absolute;bottom:-5px;right:-5px;font-size:8px;font-weight:900;color:var(--tie)}
+.rc .slash{position:absolute;inset:-2px;pointer-events:none}
+.empty{color:var(--dim);font-size:12px}
+
+/* ---- input ---- */
+.pend{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+.pendbox{font-size:13px;font-weight:800;letter-spacing:.5px;color:var(--mut);border:1px dashed var(--line);border-radius:10px;padding:8px 14px}
+.pendbox b{color:var(--nine)}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center;justify-content:center}
+button{font-family:inherit;cursor:pointer;font-weight:800;border:none;border-radius:11px;transition:.12s;color:#fff}
+button:active{transform:translateY(1px)}
+button:focus-visible{outline:2px solid var(--nine);outline-offset:2px}
+.bk{background:linear-gradient(180deg,#ff4258,#e01e37);font-size:16px;padding:13px 24px}
+.pl{background:linear-gradient(180deg,#3d87ff,#1f5ce0);font-size:16px;padding:13px 24px}
+.ti{background:linear-gradient(180deg,#1ce0aa,#0bb98a);font-size:15px;padding:13px 20px;color:#052}
+.bk.sel,.pl.sel,.ti.sel{box-shadow:0 0 0 2px var(--nine),0 0 18px rgba(255,197,49,.4)}
+.pt{background:rgba(255,255,255,.07);font-size:16px;padding:12px 0;width:46px;color:var(--txt);border:1px solid var(--line)}
+.pt.hi{background:linear-gradient(180deg,#ffce4d,#f0ab00);color:#3a2a00;border-color:transparent}
+.pr{background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:12px;padding:10px 13px;color:var(--mut)}
+.pr.on{border-color:var(--nine);color:var(--nine);background:rgba(255,197,49,.1)}
+.mini{background:rgba(255,255,255,.08);font-size:13px;padding:11px 14px;color:var(--txt)}
+.mini.csv{background:linear-gradient(180deg,#2fe08a,#12b56a);color:#052}
+.mini.rst{background:rgba(255,89,100,.18);color:#ff9aa2}
+
+/* ---- config ---- */
+.cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.cfld label{display:block;font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--mut);font-weight:800;margin-bottom:6px}
+select,input[type=number]{width:100%;font-family:inherit;font-size:13px;font-weight:700;background:rgba(255,255,255,.05);
+  border:1px solid var(--line);border-radius:9px;padding:9px 10px;color:var(--txt)}
+select option{background:#0d1424}
+
+/* ---- kpi ---- */
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:700px){.grid4{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 10px;text-align:center}
+.kpi .k{font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.kpi .v{font-size:24px;font-weight:900;margin-top:4px}
+.kpi .v.pos{color:var(--emer)}.kpi .v.neg{color:var(--red)}
+.kpi .s{font-size:10.5px;color:var(--dim);font-weight:700;margin-top:2px}
+
+/* ---- tables ---- */
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--mut);font-weight:800}
+td{font-weight:600}
+.rw{color:var(--emer);font-weight:800}.rl{color:var(--red);font-weight:800}
+.na{color:var(--dim)}
+tr.sel td{background:rgba(255,197,49,.07)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+@media(max-width:860px){.two{grid-template-columns:1fr}}
+.cell{padding:5px 3px;border-radius:6px;font-size:11px;font-weight:800;text-align:center;cursor:pointer}
+.cell small{display:block;opacity:.55;font-weight:600;font-size:9.5px}
+.cell.pick{box-shadow:0 0 0 2px var(--nine)}
+.note{font-size:11.5px;color:var(--mut);line-height:1.65;margin-top:12px}
+.note b{color:var(--nine)}
+.warn{color:var(--amb);font-weight:700}
+.foot{font-size:11px;color:var(--mut);line-height:1.6}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.fchip{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:20px;padding:7px 13px;font-size:11.5px;font-weight:700}
+.fchip b{color:var(--nine)}
+.fchip .x{color:var(--red);cursor:pointer;margin-left:7px;font-weight:900}
+.upl{display:inline-block;cursor:pointer;background:linear-gradient(180deg,#ffce4d,#f0ab00);color:#3a2a00;
+  font-weight:800;font-size:13px;padding:10px 18px;border-radius:11px}
+.upl input{display:none}
+.sectoggle{width:100%;background:rgba(255,197,49,.09);border:1px solid rgba(255,197,49,.3);color:var(--nine);
+  font-size:13px;letter-spacing:1.2px;padding:14px;border-radius:14px;text-transform:uppercase}
+.sec{display:none;flex-direction:column;gap:15px}
+.sec.on{display:flex}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="head">
+    <div>
+      <div class="brand">STRI<span class="n">9</span>ES <span class="t">TERMINATOR</span></div>
+      <div class="sub">Log the side, the winning point, the pairs. The lab tells you which pattern actually pays — and which one is a story.</div>
+    </div>
+    <div class="chip">RESEARCH BUILD</div>
+  </div>
+
+  <div class="signal" id="signal">
+    <div class="st" id="sigSt">WATCHING</div>
+    <div class="big" id="sigBig">—</div>
+    <div class="meta" id="sigMeta"></div>
+  </div>
+
+  <div class="roads">
+    <div class="panel"><div class="plabel">Bead Plate <span>· game order, 6 down then right · point in the dot · pair dots on the corners</span></div>
+      <div class="scroll"><div class="rgrid" id="bead"></div></div></div>
+    <div class="panel"><div class="plabel">Big Road <span>· ties = green slash + count · gold ring = 8 or 9</span></div>
+      <div class="scroll"><div class="bgrid" id="bigroad"></div></div></div>
+  </div>
+
+  <div class="panel">
+    <div class="plabel">Enter hand <span id="where">· pick a side and a point in either order — the hand commits when both are set</span></div>
+    <div class="pend"><div class="pendbox" id="pend">side <b>—</b> · point <b>—</b></div></div>
+    <div class="row" style="margin-bottom:11px">
+      <button class="bk" id="sB" onclick="stageSide('B')">BANKER</button>
+      <button class="pl" id="sP" onclick="stageSide('P')">PLAYER</button>
+      <button class="ti" id="sT" onclick="stageSide('T')">TIE</button>
+      <button class="pr" id="prB" onclick="togglePair('bp')">B Pair</button>
+      <button class="pr" id="prP" onclick="togglePair('pp')">P Pair</button>
+    </div>
+    <div class="row" style="margin-bottom:11px" id="pts"></div>
+    <div class="row">
+      <button class="mini" onclick="undo()">Undo</button>
+      <button class="mini" onclick="newShoe()">New Shoe</button>
+      <button class="mini csv" onclick="exportCSV()">Export hands CSV</button>
+      <button class="mini rst" onclick="resetAll()">Reset board</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="plabel">Signal definition <span>· everything below recomputes live</span></div>
+    <div class="cfg">
+      <div class="cfld"><label>Trigger</label><select id="cTrig" onchange="save();render()"></select></div>
+      <div class="cfld"><label>Side shape · last two hands</label><select id="cShape" onchange="save();render()">
+        <option value="any">Any</option>
+        <option value="same">Same side (BB / PP)</option>
+        <option value="flip">Alternating (BP / PB)</option>
+        <option value="tie">Tie in the pair</option>
+      </select></div>
+      <div class="cfld"><label>Alignment required</label><select id="cAlign" onchange="save();render()">
+        <option value="none">None — fire on the trigger alone</option>
+        <option value="bead">Bead column lead agrees</option>
+        <option value="big">Big Road streak ≥2 agrees</option>
+        <option value="both" selected>Both agree (your current setup)</option>
+      </select></div>
+      <div class="cfld"><label>Bet side</label><select id="cRule" onchange="save();render()">
+        <option value="last">Repeat the last side</option>
+        <option value="big" selected>Big Road streak side</option>
+        <option value="bead">Bead column lead side</option>
+        <option value="opp">Opposite the last side</option>
+      </select></div>
+      <div class="cfld"><label>Max bets (flat, no martingale)</label><select id="cMax" onchange="save();render()">
+        <option>1</option><option>2</option><option>3</option><option selected>4</option></select></div>
+    </div>
+    <div class="note" id="cfgNote"></div>
+  </div>
+
+  <div class="grid4" id="kpis"></div>
+
+  <div class="panel">
+    <div class="plabel">Sweep · every trigger × every alignment <span>· bet-1 win % (sample) · click a cell to load it above</span></div>
+    <div class="scroll" id="sweep"></div>
+    <div class="note" id="sweepNote"></div>
+  </div>
+
+  <div class="panel">
+    <div class="plabel">Side shape · does BB / PP behave differently from BP / PB? <span>· bet-1 win % (sample) · click to load</span></div>
+    <div class="scroll" id="shape"></div>
+    <div class="note" id="shapeNote"></div>
+  </div>
+
+  <div class="panel">
+    <div class="plabel">Bet depth · where the wins land</div>
+    <div class="scroll"><table>
+      <thead><tr><th>Bet</th><th>Reached</th><th>Won here</th><th>Win % at this bet</th><th>±95%</th><th>Cum. resolved</th><th>Flat P/L (u)</th></tr></thead>
+      <tbody id="tDepth"></tbody></table></div>
+    <div class="note" id="depthNote"></div>
+  </div>
+
+  <div class="two">
+    <div class="panel"><div class="plabel">Hand number in the shoe</div>
+      <div class="scroll"><table><thead><tr><th>Hands</th><th>Signals</th><th>Bet-1 W-L</th><th>Bet-1 %</th><th>vs base</th></tr></thead><tbody id="tHand"></tbody></table></div>
+      <div class="note">Nine buckets, ~10 hands each. With a typical 70–80 hand shoe you need many shoes before any bucket has a sample worth reading.</div></div>
+    <div class="panel"><div class="plabel">Bead lead × Big Road streak at the trigger</div>
+      <div class="scroll" id="cross"></div>
+      <div class="note">Bet-1 win % per cell, sample in brackets. Green above the baseline, red below.</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="plabel">Pairs and ties after the combo <span>· side-bet research, independent of who wins</span></div>
+    <div class="scroll"><table>
+      <thead><tr><th>Event</th><th>Next hand</th><th>Base</th><th>z</th><th>Within next 4</th><th>Base</th><th>z</th><th>n</th></tr></thead>
+      <tbody id="tPair"></tbody></table></div>
+    <div class="note" id="pairNote"></div>
+  </div>
+
+  <button class="sectoggle" onclick="toggleSec('secRaw',this,'Raw shoe structure')">▸ Raw shoe structure — is there any dependence at all?</button>
+  <div class="sec" id="secRaw">
+    <div class="two">
+      <div class="panel"><div class="plabel">Digit repeat · P(point v again | point was v)</div>
+        <div class="scroll"><table><thead><tr><th>Point</th><th>Count</th><th>P(v)</th><th>P(v | prev v)</th><th>n</th><th>Δ</th><th>z</th></tr></thead><tbody id="tDigit"></tbody></table></div>
+        <div class="note">This is the cleanest test of the whole idea. If <b>P(9 | prev 9)</b> sits on top of <b>P(9)</b>, then a 9 tells you nothing about the next 9 and every "99 means something" pattern below it is built on sand. |z| &gt; 2.6 on a decent sample is where I'd start paying attention (10 digits tested = 10 chances to get lucky).</div></div>
+      <div class="panel"><div class="plabel">Side repeat after each point · P(same side next | this point)</div>
+        <div class="scroll"><table><thead><tr><th>Point</th><th>Repeat W-L</th><th>Repeat %</th><th>Base</th><th>Δ</th><th>z</th></tr></thead><tbody id="tRepeat"></tbody></table></div>
+        <div class="note">Your "88 → Banker happens a lot" claim, tested directly and with no alignment filter to hide behind. Ties skipped on both sides of the comparison.</div></div>
+    </div>
+    <div class="panel"><div class="plabel">Run lengths of 8s and 9s · observed vs. independent shoe</div>
+      <div class="scroll"><table><thead><tr><th>Run</th><th>Observed</th><th>Expected if independent</th><th>Δ</th></tr></thead><tbody id="tRun"></tbody></table></div>
+      <div class="note">Expected counts come from each digit's own frequency in <i>your</i> data, assuming hands don't talk to each other. Consistent excess in the 2s and 3s would be the first real crack.</div></div>
+  </div>
+
+  <button class="sectoggle" onclick="toggleSec('secData',this,'Data sources')">▸ Data sources — load and stack shoes</button>
+  <div class="sec" id="secData">
+    <div class="panel">
+      <div class="plabel">Hand-level CSV <span>· shoe,hand,side,point,bpair,ppair</span></div>
+      <label class="upl">Load CSV files<input type="file" id="files" multiple accept=".csv,.txt" onchange="loadFiles(event)"></label>
+      <button class="mini rst" style="margin-left:8px" onclick="clearData()">Unload all</button>
+      <div class="chips" id="chips"></div>
+      <div class="note">This exports <b>raw hands</b>, not signals. Every table on this page recomputes from the raw log, so a shoe you record today can be re-tested against a rule you invent next month. Your old STRI9ES signal-CSVs can't be loaded here — they threw the raw data away.</div>
+    </div>
+  </div>
+
+  <div class="panel"><div class="plabel">Honest read</div><div class="note" id="verdict"></div></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+/* ============ state ============ */
+var KEY='stri9es_terminator_v1';
+var events=[];              // {shoe:true} | {side,pt,bp,pp}
+var EXT=[];                 // [{name,shoes:[[hand,...]]}]
+var stage={side:null,pt:null,bp:false,pp:false};
+
+var TRIGS=[
+  {k:'any',  lab:'Any hand (control)',        f:function(c){return true;}},
+  {k:'no89', lab:'Last hand NOT 8 or 9',      f:function(c){return c.mixRun===0;}},
+  {k:'9g2',  lab:'99 · last two are 9s',      f:function(c){return c.runV===9&&c.runLen>=2;}},
+  {k:'9x1',  lab:'9 · run of exactly 1',      f:function(c){return c.runV===9&&c.runLen===1;}},
+  {k:'9x2',  lab:'99 · run of exactly 2',     f:function(c){return c.runV===9&&c.runLen===2;}},
+  {k:'9x3',  lab:'999 · run of 3 or more',    f:function(c){return c.runV===9&&c.runLen>=3;}},
+  {k:'8g2',  lab:'88 · last two are 8s',      f:function(c){return c.runV===8&&c.runLen>=2;}},
+  {k:'8x1',  lab:'8 · run of exactly 1',      f:function(c){return c.runV===8&&c.runLen===1;}},
+  {k:'8x2',  lab:'88 · run of exactly 2',     f:function(c){return c.runV===8&&c.runLen===2;}},
+  {k:'8x3',  lab:'888 · run of 3 or more',    f:function(c){return c.runV===8&&c.runLen>=3;}},
+  {k:'Ag2',  lab:'88 or 99 · last two match', f:function(c){return (c.runV===8||c.runV===9)&&c.runLen>=2;}},
+  {k:'Ax1',  lab:'8 or 9 · run of exactly 1', f:function(c){return (c.runV===8||c.runV===9)&&c.runLen===1;}},
+  {k:'Ax2',  lab:'88 or 99 · exactly 2',      f:function(c){return (c.runV===8||c.runV===9)&&c.runLen===2;}},
+  {k:'Ax3',  lab:'888 or 999 · 3 or more',    f:function(c){return (c.runV===8||c.runV===9)&&c.runLen>=3;}},
+  {k:'Mx2',  lab:'Mixed digits ≥2 (89 / 98)', f:function(c){return c.mixRun>=2;}},
+  {k:'Mx3',  lab:'Mixed digits ≥3',           f:function(c){return c.mixRun>=3;}}
+];
+var ALIGNS=[{k:'none',lab:'None'},{k:'bead',lab:'Bead'},{k:'big',lab:'Big ≥2'},{k:'both',lab:'Both'}];
+var SHAPES=[{k:'any',lab:'Any'},{k:'same',lab:'Same side (BB / PP)'},{k:'flip',lab:'Alternating (BP / PB)'},{k:'tie',lab:'Tie in the pair'}];
+var SHGRID=['any','no89','9g2','9x2','9x3','8g2','8x2','8x3','Ag2','Mx2'];
+
+/* ============ helpers ============ */
+function $(id){return document.getElementById(id);}
+function pc(w,t){return t?Math.round(w/t*1000)/10:0;}
+function ci95(p,n){return n?Math.round(196*Math.sqrt(p*(1-p)/n)*10)/10:0;}
+function zt(p,p0,n){return (n&&p0>0&&p0<1)?Math.round((p-p0)/Math.sqrt(p0*(1-p0)/n)*100)/100:0;}
+function opp(s){return s==='B'?'P':s==='P'?'B':null;}
+function cfg(){return{trig:$('cTrig').value,align:$('cAlign').value,rule:$('cRule').value,max:parseInt($('cMax').value)||4,shape:$('cShape').value};}
+function trigDef(k){for(var i=0;i<TRIGS.length;i++)if(TRIGS[i].k===k)return TRIGS[i];return TRIGS[0];}
+
+/* ============ shoe assembly ============ */
+function boardShoes(keepEmpty){
+  var out=[[]];
+  for(var i=0;i<events.length;i++){
+    var e=events[i];
+    if(e.shoe){ if(out[out.length-1].length) out.push([]); }
+    else out[out.length-1].push(e);
+  }
+  return keepEmpty?out:out.filter(function(s){return s.length;});
+}
+function allShoes(){
+  var s=boardShoes().slice();
+  for(var i=0;i<EXT.length;i++) s=s.concat(EXT[i].shoes);
+  return s;
+}
+
+/* ============ roads ============ */
+function beadLead(hands,upto){
+  var n=upto; if(!n) return {side:null,b:0,p:0,count:0};
+  var cs=Math.floor((n-1)/6)*6, b=0, p=0;
+  for(var i=cs;i<n;i++){ if(hands[i].side==='B')b++; else if(hands[i].side==='P')p++; }
+  return {side:b>p?'B':p>b?'P':null,b:b,p:p,count:Math.max(b,p)};
+}
+function bigRoadGrid(hands){
+  var marks=[],i;
+  for(i=0;i<hands.length;i++){
+    var h=hands[i];
+    if(h.side==='T'){ if(marks.length) marks[marks.length-1].ties++; continue; }
+    marks.push({side:h.side,ties:0,pt:h.pt});
+  }
+  var grid={},last=null,c=0,r=0,home=0,maxC=0;
+  for(i=0;i<marks.length;i++){
+    var m=marks[i];
+    if(last===null){ c=0;r=0;home=0; }
+    else if(m.side===last){
+      if(r<5 && !grid[c+','+(r+1)]) r++;
+      else { var nc=c+1; while(grid[nc+','+r]) nc++; c=nc; }
+    } else {
+      var k=home+1; while(grid[k+',0']) k++;
+      c=k; r=0; home=k;
+    }
+    grid[c+','+r]=m; last=m.side; if(c>maxC)maxC=c;
+  }
+  return {grid:grid,maxC:maxC,n:marks.length};
+}
+
+/* ============ contexts ============ */
+/* ctx[i] = state of the shoe BEFORE hand i is dealt (i = hands seen so far) */
+function contexts(hands){
+  var ctx=[],runV=null,runLen=0,mixRun=0,big=[],lastSide=null;
+  for(var i=0;i<=hands.length;i++){
+    var st=big.length?{side:big[big.length-1].side,len:big[big.length-1].len}:null;
+    var sh=null;
+    if(i>=2){
+      var s1=hands[i-2].side,s2=hands[i-1].side;
+      sh=(s1==='T'||s2==='T')?'tie':(s1===s2?'same':'flip');
+    }
+    ctx.push({idx:i,runV:runV,runLen:runLen,mixRun:mixRun,shape2:sh,streak:st,lead:beadLead(hands,i),lastSide:lastSide});
+    if(i===hands.length) break;
+    var h=hands[i];
+    if(h.side!=='T'){
+      if(big.length&&big[big.length-1].side===h.side) big[big.length-1].len++;
+      else big.push({side:h.side,len:1});
+      lastSide=h.side;
+    }
+    if(runV===h.pt) runLen++; else { runV=h.pt; runLen=1; }
+    mixRun=(h.pt===8||h.pt===9)?mixRun+1:0;
+  }
+  return ctx;
+}
+function betSide(c,rule){
+  if(rule==='last')return c.lastSide;
+  if(rule==='opp')return opp(c.lastSide);
+  if(rule==='big')return c.streak?c.streak.side:null;
+  if(rule==='bead')return c.lead.side;
+  return null;
+}
+function alignOK(c,S,a){
+  if(a==='none')return true;
+  var b=(c.lead.side===S), g=(!!c.streak&&c.streak.len>=2&&c.streak.side===S);
+  if(a==='bead')return b;
+  if(a==='big')return g;
+  return b&&g;
+}
+function fires(c,k,align,rule,shape){
+  if(shape&&shape!=='any'&&c.shape2!==shape)return null;
+  if(!trigDef(k).f(c))return null;
+  var S=betSide(c,rule); if(!S)return null;
+  if(!alignOK(c,S,align))return null;
+  return S;
+}
+/* resolve from hand i betting S, ties push */
+function resolve(hands,i,S,maxB){
+  var bet=1;
+  for(var j=i;j<hands.length;j++){
+    var h=hands[j];
+    if(h.side==='T')continue;
+    if(h.side===S)return {bet:bet,res:'W'};
+    bet++;
+    if(bet>maxB)return {bet:maxB,res:'L'};
+  }
+  return null; /* censored — shoe ended mid-resolution */
+}
+
+/* ============ analysis ============ */
+/* Inclusion is decided by how many hands REMAIN, never by what happened.
+   Three separate, individually unbiased samples:
+     n1  bet-1        needs >=1 non-tie hand left
+     nR  full depth   needs >=maxB non-tie hands left  (a loss must be as confirmable as a win)
+     n4  side-bet     needs >=4 raw hands left
+   Mixing them into one denominator is what silently inflates a win rate. */
+function run(shoes,k,align,rule,maxB,shape){
+  var A={n1:0,w1:0,nR:0,cens:0,fail:0,nP1:0,n4:0,reach:[],won:[],hand:{},cross:{},
+         side:{B:{w:0,l:0},P:{w:0,l:0}},tie1:0,tie4:0,pair1:0,pair4:0};
+  var i,j,b;
+  for(i=0;i<=maxB;i++){A.reach.push(0);A.won.push(0);}
+  for(var s=0;s<shoes.length;s++){
+    var hands=shoes[s], ctx=contexts(hands), n=hands.length;
+    /* rem[i] = non-tie hands remaining from i onward */
+    var rem=new Array(n+1); rem[n]=0;
+    for(j=n-1;j>=0;j--) rem[j]=rem[j+1]+(hands[j].side==='T'?0:1);
+    for(i=0;i<n;i++){
+      var S=fires(ctx[i],k,align,rule,shape);
+      if(!S)continue;
+
+      /* side-bet windows: outcome-free, so they only need hands to exist */
+      A.nP1++;
+      if(hands[i].side==='T')A.tie1++;
+      if(hands[i].bp||hands[i].pp)A.pair1++;
+      if(i+4<=n){
+        A.n4++;
+        var t4=0,p4=0;
+        for(j=i;j<i+4;j++){ if(hands[j].side==='T')t4=1; if(hands[j].bp||hands[j].pp)p4=1; }
+        A.tie4+=t4; A.pair4+=p4;
+      }
+
+      if(rem[i]<1){A.cens++;continue;}   /* nothing but ties left — no bet possible either way */
+
+      /* bet-1 sample: inclusion needs one non-tie hand, which is outcome-independent */
+      var first=null;
+      for(j=i;j<n;j++){ if(hands[j].side!=='T'){first=hands[j].side;break;} }
+      var hit=(first===S)?1:0;
+      A.n1++; if(hit)A.w1++;
+      var hb=Math.min(8,Math.floor(i/10));
+      var hh=A.hand[hb]||(A.hand[hb]={w:0,l:0}); hh[hit?'w':'l']++;
+      A.side[S][hit?'w':'l']++;
+      var ck=(ctx[i].streak?Math.min(6,ctx[i].streak.len):0)+'|'+Math.min(6,ctx[i].lead.count);
+      var cc=A.cross[ck]||(A.cross[ck]={w:0,l:0}); cc[hit?'w':'l']++;
+
+      /* depth sample: only where a full loss could have been observed */
+      if(rem[i]>=maxB){
+        var r=resolve(hands,i,S,maxB);
+        A.nR++;
+        for(b=1;b<=r.bet;b++)A.reach[b]++;
+        if(r.res==='W')A.won[r.bet]++; else A.fail++;
+      } else A.cens++;
+    }
+  }
+  return A;
+}
+
+/* ============ raw structure ============ */
+function rawStats(shoes){
+  var cnt={},rep={},pairAfter=0,N=0,i,j;
+  var repSide={},baseRep={w:0,l:0},runs={};
+  for(i=0;i<10;i++){cnt[i]=0;rep[i]={y:0,n:0};repSide[i]={w:0,l:0};}
+  var tie=0,pair=0;
+  for(var s=0;s<shoes.length;s++){
+    var h=shoes[s];
+    for(i=0;i<h.length;i++){
+      N++;cnt[h[i].pt]++;
+      if(h[i].side==='T')tie++;
+      if(h[i].bp||h[i].pp)pair++;
+      if(i+1<h.length) rep[h[i].pt][h[i+1].pt===h[i].pt?'y':'n']++;
+      /* side repeat: next non-tie vs this non-tie */
+      if(h[i].side!=='T'){
+        var nx=null;
+        for(j=i+1;j<h.length;j++){ if(h[j].side!=='T'){nx=h[j].side;break;} }
+        if(nx){ var hit=(nx===h[i].side)?'w':'l'; repSide[h[i].pt][hit]++; baseRep[hit]++; }
+      }
+    }
+    /* runs of 8 and 9 */
+    var v=null,L=0;
+    for(i=0;i<=h.length;i++){
+      var pt=(i<h.length)?h[i].pt:-1;
+      if(pt===v){L++;}
+      else{
+        if(v===8||v===9){ var kk=v+'x'+Math.min(4,L); runs[kk]=(runs[kk]||0)+1; }
+        v=pt;L=1;
+      }
+    }
+  }
+  return {cnt:cnt,rep:rep,repSide:repSide,baseRep:baseRep,runs:runs,N:N,tie:tie,pair:pair};
+}
+function expRuns(R){
+  var out={},N=R.N;
+  [8,9].forEach(function(v){
+    var p=N?R.cnt[v]/N:0,q=1-p;
+    for(var L=1;L<=4;L++){
+      var e=(L<4)?N*q*Math.pow(p,L)*q:N*q*Math.pow(p,4);
+      out[v+'x'+L]=Math.round(e*10)/10;
+    }
+  });
+  return out;
+}
+
+/* ============ input ============ */
+function stageSide(s){ stage.side=(stage.side===s)?null:s; tryCommit(); }
+function stagePt(p){ stage.pt=(stage.pt===p)?null:p; tryCommit(); }
+function togglePair(k){ stage[k]=!stage[k]; renderStage(); }
+function tryCommit(){
+  if(stage.side!==null&&stage.pt!==null){
+    events.push({side:stage.side,pt:stage.pt,bp:stage.bp,pp:stage.pp});
+    stage={side:null,pt:null,bp:false,pp:false};
+    save();render();
+  } else { renderStage(); }
+}
+function undo(){ if(stage.side!==null||stage.pt!==null||stage.bp||stage.pp){stage={side:null,pt:null,bp:false,pp:false};renderStage();return;} events.pop();save();render(); }
+function newShoe(){
+  var b=boardShoes(true);
+  if(!b.length||!b[b.length-1].length)return;   /* current shoe already empty */
+  events.push({shoe:true}); save(); render();
+}
+function resetAll(){ if(confirm('Clear the board? Loaded CSV files stay.')){events=[];save();render();} }
+
+/* ============ render: board ============ */
+function renderStage(){
+  var nm={B:'Banker',P:'Player',T:'Tie'};
+  $('pend').innerHTML='side <b>'+(stage.side?nm[stage.side]:'—')+'</b> · point <b>'+(stage.pt!==null?stage.pt:'—')+'</b>'+
+    ((stage.bp||stage.pp)?' · <b>'+(stage.bp?'B pair ':'')+(stage.pp?'P pair':'')+'</b>':'');
+  $('sB').className='bk'+(stage.side==='B'?' sel':'');
+  $('sP').className='pl'+(stage.side==='P'?' sel':'');
+  $('sT').className='ti'+(stage.side==='T'?' sel':'');
+  $('prB').className='pr'+(stage.bp?' on':'');
+  $('prP').className='pr'+(stage.pp?' on':'');
+  var h='';
+  for(var i=0;i<=9;i++) h+='<button class="pt'+(stage.pt===i?' hi':'')+'" onclick="stagePt('+i+')">'+i+'</button>';
+  $('pts').innerHTML=h;
+}
+function renderBoard(hands){
+  var h='',i;
+  for(i=0;i<hands.length;i++){
+    var d=hands[i],hot=(d.pt===8||d.pt===9);
+    h+='<div class="bd '+d.side+(hot?' hot':'')+'" style="grid-column:'+(Math.floor(i/6)+1)+';grid-row:'+(i%6+1)+'">'+d.pt+
+       (d.pp?'<span class="pp"></span>':'')+(d.bp?'<span class="bp"></span>':'')+'</div>';
+  }
+  $('bead').innerHTML=h||'<span class="empty">empty</span>';
+
+  var G=bigRoadGrid(hands),g='';
+  var slash='<span class="slash"><svg viewBox="0 0 26 26" width="26" height="26"><line x1="2" y1="24" x2="24" y2="2" stroke="#12d6a0" stroke-width="2.5"/></svg></span>';
+  for(var key in G.grid){
+    var p=key.split(','),m=G.grid[key],hot2=(m.pt===8||m.pt===9);
+    g+='<div class="rc '+m.side+(hot2?' hot':'')+'" style="grid-column:'+(+p[0]+1)+';grid-row:'+(+p[1]+1)+'">'+m.pt+
+       (m.ties?slash+'<span class="tn">'+m.ties+'</span>':'')+'</div>';
+  }
+  var bg=$('bigroad');
+  bg.style.gridTemplateColumns='repeat('+Math.max(1,G.maxC+1)+',26px)';
+  bg.innerHTML=g||'<span class="empty">empty</span>';
+}
+function renderSignal(hands,C){
+  var ctx=contexts(hands),armed=null,i;
+  for(i=0;i<hands.length;i++){
+    if(armed){
+      var hh=hands[i];
+      if(hh.side!=='T'){
+        if(hh.side===armed.side)armed=null;
+        else { armed.bet++; if(armed.bet>C.max)armed=null; }
+      }
+    }
+    if(!armed){ var S=fires(ctx[i+1],C.trig,C.align,C.rule,C.shape); if(S)armed={side:S,bet:1,at:i+1,c:ctx[i+1]}; }
+  }
+  var sig=$('signal');
+  if(armed){
+    var nm=armed.side==='B'?'BANKER':'PLAYER';
+    sig.className='signal armed '+armed.side;
+    $('sigSt').textContent='BET NOW · BET '+armed.bet+' OF '+C.max;
+    $('sigBig').textContent=nm;
+    $('sigMeta').textContent=trigDef(C.trig).lab+'  ·  streak '+(armed.c.streak?armed.c.streak.side+'×'+armed.c.streak.len:'—')+
+      '  ·  bead '+(armed.c.lead.side?armed.c.lead.side+armed.c.lead.count:'level')+'  ·  hand '+(armed.at+1);
+  } else {
+    sig.className='signal';
+    $('sigSt').textContent='WATCHING';
+    $('sigBig').textContent='—';
+    $('sigMeta').textContent='Waiting for: '+trigDef(C.trig).lab.toLowerCase()+
+      (C.align==='none'?'':C.align==='both'?' with bead lead and Big Road streak ≥2 both agreeing':C.align==='bead'?' with the bead lead agreeing':' with a Big Road streak ≥2 agreeing');
+  }
+}
+
+/* ============ render: lab ============ */
+function render(){
+  renderStage();
+  var C=cfg(), board=boardShoes(true), shoes=allShoes();
+  var live=board.length?board[board.length-1]:[];
+  renderBoard(live);
+  renderSignal(live,C);
+  $('where').textContent='· shoe '+board.length+' · hand '+(live.length+1)+' · '+shoes.length+' shoes total in the analysis';
+
+  var A=run(shoes,C.trig,C.align,C.rule,C.max,C.shape);
+  var B=run(shoes,'any',C.align,C.rule,C.max,C.shape);  /* same rule + alignment + side shape, no point condition */
+  var base1=B.n1?B.w1/B.n1:0.5;
+  var p1=A.n1?A.w1/A.n1:0;
+
+  $('cfgNote').innerHTML='Baseline for every comparison on this page = <b>the same bet side and the same alignment filter, fired on every hand</b> with no 8/9 condition — '+
+    B.n1+' samples, bet-1 win '+pc(B.w1,B.n1)+'%. That is the number your trigger has to beat. Beating 50% is not the test; beating the baseline is.';
+
+  var d1=Math.round((p1-base1)*1000)/10, z1=zt(p1,base1,A.n1);
+  $('kpis').innerHTML=
+    '<div class="kpi"><div class="k">Signals · bet 1</div><div class="v">'+A.n1+'</div><div class="s">'+A.nR+' with room to resolve '+C.max+'</div></div>'+
+    '<div class="kpi"><div class="k">Bet-1 win %</div><div class="v '+(p1>=base1?'pos':'neg')+'">'+pc(A.w1,A.n1)+'%</div><div class="s">±'+ci95(p1,A.n1)+' · base '+pc(B.w1,B.n1)+'%</div></div>'+
+    '<div class="kpi"><div class="k">Edge vs baseline</div><div class="v '+(d1>=0?'pos':'neg')+'">'+(d1>=0?'+':'')+d1+'</div><div class="s">z = '+z1+'</div></div>'+
+    '<div class="kpi"><div class="k">Resolved by bet '+C.max+'</div><div class="v">'+pc(A.nR-A.fail,A.nR)+'%</div><div class="s">'+A.fail+' never came in</div></div>';
+
+  /* sweep */
+  var sw='<table><thead><tr><th>Trigger</th>';
+  for(var a=0;a<ALIGNS.length;a++) sw+='<th style="text-align:center">'+ALIGNS[a].lab+'</th>';
+  sw+='</tr></thead><tbody>';
+  var best=null,tested=0;
+  for(var t=0;t<TRIGS.length;t++){
+    sw+='<tr'+(TRIGS[t].k===C.trig?' class="sel"':'')+'><td>'+TRIGS[t].lab+'</td>';
+    for(a=0;a<ALIGNS.length;a++){
+      var X=run(shoes,TRIGS[t].k,ALIGNS[a].k,C.rule,C.max,C.shape);
+      var Y=run(shoes,'any',ALIGNS[a].k,C.rule,C.max,C.shape);
+      var b0=Y.n1?Y.w1/Y.n1:.5, px=X.n1?X.w1/X.n1:0;
+      if(!X.n1){ sw+='<td class="na" style="text-align:center">·</td>'; continue; }
+      var z=zt(px,b0,X.n1), al=Math.min(.34,Math.abs(z)/6);
+      var bg=(px>=b0)?'rgba(47,224,138,'+al+')':'rgba(255,89,100,'+al+')';
+      if(X.n1>=30){ tested++; if(!best||Math.abs(z)>Math.abs(best.z)) best={z:z,lab:TRIGS[t].lab+' / '+ALIGNS[a].lab,n:X.n1,p:pc(X.w1,X.n1)}; }
+      sw+='<td style="text-align:center"><div class="cell'+((TRIGS[t].k===C.trig&&ALIGNS[a].k===C.align)?' pick':'')+
+        '" style="background:'+bg+'" onclick="pick(\''+TRIGS[t].k+'\',\''+ALIGNS[a].k+'\')">'+pc(X.w1,X.n1)+'%<small>'+X.n1+'</small></div></td>';
+    }
+    sw+='</tr>';
+  }
+  $('sweep').innerHTML=sw+'</tbody></table>';
+  var bon=tested?Math.round(0.05/tested*10000)/10000:0;
+  $('sweepNote').innerHTML='Shading is <b>z against that column\'s own baseline row</b>, not against 50%. '+
+    'The <b>last two are 9s</b> row is the union of <b>exactly 2</b> and <b>3 or more</b> — it is the same hands counted a second way, not a second piece of evidence. '+
+    (tested?('You are looking at <b>'+tested+'</b> cells with a usable sample at once. At that many looks, the 5% significance line moves from p=0.05 to roughly <b>p='+bon+'</b> (|z| ≈ '+(tested?Math.round((1.96+Math.log(tested)*0.42)*100)/100:0)+'), '+
+      'because the brightest cell on a grid this size is what noise looks like. Strongest cell right now: <b>'+(best?best.lab+' · '+best.p+'% on '+best.n+' · z='+best.z:'—')+'</b>.'+
+      (best&&Math.abs(best.z)<2.6?' That is not strong enough to act on — it is the kind of number a fair shoe hands you for free.':'')):
+      'No cell has 30+ samples yet. Keep logging.');
+
+  /* side shape grid — every cell is judged against the control row in its OWN column */
+  var sg='<table><thead><tr><th>Trigger</th>';
+  for(var q=1;q<SHAPES.length;q++) sg+='<th style="text-align:center">'+SHAPES[q].lab+'</th>';
+  sg+='</tr></thead><tbody>';
+  var shBase={};
+  for(q=1;q<SHAPES.length;q++){ var Z=run(shoes,'any',C.align,C.rule,C.max,SHAPES[q].k); shBase[SHAPES[q].k]=Z.n1?Z.w1/Z.n1:.5; }
+  for(t=0;t<SHGRID.length;t++){
+    var td=trigDef(SHGRID[t]);
+    sg+='<tr'+(td.k===C.trig?' class="sel"':'')+'><td>'+(td.k==='any'?'Any hand (control)':td.lab)+'</td>';
+    for(q=1;q<SHAPES.length;q++){
+      var W=run(shoes,td.k,C.align,C.rule,C.max,SHAPES[q].k), b2=shBase[SHAPES[q].k], pw=W.n1?W.w1/W.n1:0;
+      if(!W.n1){ sg+='<td class="na" style="text-align:center">·</td>'; continue; }
+      var zz=zt(pw,b2,W.n1), aa=Math.min(.34,Math.abs(zz)/6);
+      sg+='<td style="text-align:center"><div class="cell'+((td.k===C.trig&&SHAPES[q].k===C.shape)?' pick':'')+
+        '" style="background:'+((pw>=b2)?'rgba(47,224,138,':'rgba(255,89,100,')+aa+')" onclick="pickShape(\''+td.k+'\',\''+SHAPES[q].k+'\')">'+
+        pc(W.w1,W.n1)+'%<small>'+W.n1+'</small></div></td>';
+    }
+    sg+='</tr>';
+  }
+  $('shape').innerHTML=sg+'</tbody></table>';
+  $('shapeNote').innerHTML='Shape is read off the <b>last two hands only</b>, by side, and it applies to the control row too — so "Double 99 / Same side" is being judged against '+
+    '"any two same-side hands", not against the whole shoe. That is the comparison that matters, because <b>BB already means a Big Road streak ≥2 by construction</b>. '+
+    'Half the apparent edge of a same-side combo is just "streaks continue"; the control row subtracts it out. '+
+    'Structural notes so empty cells do not confuse you: with <b>Bet side = Big Road streak side</b>, the Alternating column can never satisfy a "Big ≥2" alignment '+
+    '(a flip means the streak is length 1), and the Same column satisfies it automatically. Ties have no side, so a pair containing one lands in the third column.'+
+    (C.shape!=='any'?' <span class="warn">Filter active:</span> everything else on this page is currently restricted to <b>'+SHAPES.filter(function(x){return x.k===C.shape;})[0].lab+'</b>.':'');
+
+  /* depth */
+  var dep='',cum=0,pl=0;
+  for(var b=1;b<=C.max;b++){
+    var rc=A.reach[b],wa=A.won[b];
+    cum+=wa; pl+=wa;
+    var pb=rc?wa/rc:0;
+    dep+='<tr><td>Bet '+b+'</td><td>'+rc+'</td><td>'+wa+'</td>'+
+      '<td class="'+(rc?(pb>=base1?'rw':'rl'):'na')+'">'+(rc?pc(wa,rc)+'%':'—')+'</td>'+
+      '<td class="na">'+(rc?'±'+ci95(pb,rc):'—')+'</td><td>'+pc(cum,A.nR)+'%</td><td class="na">—</td></tr>';
+  }
+  var flat=A.w1-(A.n1-A.w1);
+  dep+='<tr><td class="rl">Never won</td><td>—</td><td>'+A.fail+'</td><td class="na">—</td><td class="na">—</td><td>'+pc(A.nR-A.fail,A.nR)+'%</td><td class="na">—</td></tr>';
+  if(!A.nR)dep='<tr><td colspan="7" class="na" style="text-align:center">no fire yet has enough hands after it to lose '+C.max+' bets in a row</td></tr>';
+  $('tDepth').innerHTML=dep;
+  $('depthNote').innerHTML='<b>Win % at this bet</b> = of the signals that got as far as bet k, how many won there. This is the row that kills or keeps the idea: '+
+    'if the shoe has no memory, every row sits on the baseline and bet 4 is worth exactly as much as bet 1 — it just took three losses to get there. '+
+    'Flat-betting bet 1 only, these '+A.n1+' signals return <b>'+(flat>=0?'+':'')+flat+'u</b> before commission. Chasing to bet '+C.max+' raises "resolved %" by construction and changes nothing about the next hand. '+
+    'Depth uses the <b>'+A.nR+'</b> fires with room after them to lose '+C.max+' in a row — a loss has to be as observable as a win, or the win rate is fiction.';
+
+  /* hand buckets */
+  var hb='';
+  for(var k=0;k<9;k++){
+    var v=A.hand[k]; if(!v)continue;
+    var tt=v.w+v.l,pp2=tt?v.w/tt:0;
+    hb+='<tr><td>'+(k<8?(k*10+1)+'–'+(k*10+10):'71+')+'</td><td>'+tt+'</td><td>'+v.w+'-'+v.l+'</td>'+
+      '<td class="'+(pp2>=base1?'rw':'rl')+'">'+pc(v.w,tt)+'%</td><td class="'+(tt<20?'na':'')+'">z '+zt(pp2,base1,tt)+'</td></tr>';
+  }
+  $('tHand').innerHTML=hb||'<tr><td colspan="5" class="na" style="text-align:center">no signals yet</td></tr>';
+
+  /* cross */
+  var ct='<table><thead><tr><th>Streak ＼ Lead</th>';
+  for(var l=1;l<=6;l++)ct+='<th style="text-align:center">'+l+'</th>';
+  ct+='</tr></thead><tbody>';
+  for(var s2=0;s2<=6;s2++){
+    var any=false,row='<tr><td>'+(s2?'×'+s2:'none')+'</td>';
+    for(l=1;l<=6;l++){
+      var v2=A.cross[s2+'|'+l];
+      if(!v2){row+='<td class="na" style="text-align:center">·</td>';continue;}
+      any=true;
+      var t2=v2.w+v2.l,p2=v2.w/t2,al2=Math.min(.34,Math.abs(p2-base1)*2.2);
+      row+='<td style="text-align:center"><div class="cell" style="background:'+(p2>=base1?'rgba(47,224,138,':'rgba(255,89,100,')+al2+')">'+pc(v2.w,t2)+'%<small>'+t2+'</small></div></td>';
+    }
+    if(any)ct+=row+'</tr>';
+  }
+  $('cross').innerHTML=ct+'</tbody></table>';
+
+  /* pairs & ties */
+  var R=rawStats(shoes);
+  var bt=R.N?R.tie/R.N:0, bp=R.N?R.pair/R.N:0;
+  var bt4=1-Math.pow(1-bt,4), bp4=1-Math.pow(1-bp,4);
+  function prow(lab,c1,b1,c4,b4,n,n4){
+    var q1=n?c1/n:0,q4=n4?c4/n4:0;
+    return '<tr><td>'+lab+'</td><td class="'+(q1>=b1?'rw':'rl')+'">'+pc(c1,n)+'%</td><td class="na">'+Math.round(b1*1000)/10+'%</td>'+
+      '<td class="'+(Math.abs(zt(q1,b1,n))>2?'':'na')+'">'+zt(q1,b1,n)+'</td>'+
+      '<td class="'+(q4>=b4?'rw':'rl')+'">'+(n4?pc(c4,n4)+'%':'—')+'</td><td class="na">'+Math.round(b4*1000)/10+'%</td>'+
+      '<td class="'+(Math.abs(zt(q4,b4,n4))>2?'':'na')+'">'+zt(q4,b4,n4)+'</td><td class="'+(n<30?'na':'')+'">'+n+' / '+n4+'</td></tr>';
+  }
+  var pr='';
+  ['9g2','9x1','9x2','9x3','8g2','8x1','8x2','8x3','Ag2','Ax3'].forEach(function(kk){
+    var X=run(shoes,kk,'none',C.rule,C.max);
+    if(!X.nP1)return;
+    pr+=prow('Tie after '+trigDef(kk).lab.toLowerCase(),X.tie1,bt,X.tie4,bt4,X.nP1,X.n4);
+  });
+  var pr2='';
+  ['9g2','9x1','9x2','9x3','8g2','8x1','8x2','8x3','Ag2','Ax3'].forEach(function(kk){
+    var X=run(shoes,kk,'none',C.rule,C.max);
+    if(!X.nP1)return;
+    pr2+=prow('Pair after '+trigDef(kk).lab.toLowerCase(),X.pair1,bp,X.pair4,bp4,X.nP1,X.n4);
+  });
+  $('tPair').innerHTML=(pr+pr2)||'<tr><td colspan="8" class="na" style="text-align:center">no data yet</td></tr>';
+  $('pairNote').innerHTML='Base rates are measured from your own logged hands: tie <b>'+Math.round(bt*1000)/10+'%</b>, any pair <b>'+Math.round(bp*1000)/10+'%</b> per hand ('+R.N+' hands). '+
+    'The 4-hand base assumes independence, which is the thing being tested. A tie pays 8:1 and needs 11.1% to break even; a pair pays 11:1 and needs 8.3%. '+
+    'Note these rows use no alignment filter — pairs and ties do not care which side the road points at.';
+
+  /* raw structure */
+  var dg='';
+  for(var v3=0;v3<=9;v3++){
+    var c3=R.cnt[v3],pv=R.N?c3/R.N:0,rr=R.rep[v3],nn=rr.y+rr.n,pr3=nn?rr.y/nn:0;
+    dg+='<tr'+((v3===8||v3===9)?' class="sel"':'')+'><td>'+v3+'</td><td>'+c3+'</td><td>'+Math.round(pv*1000)/10+'%</td>'+
+      '<td class="'+(nn?(pr3>=pv?'rw':'rl'):'na')+'">'+(nn?Math.round(pr3*1000)/10+'%':'—')+'</td>'+
+      '<td class="'+(nn<30?'na':'')+'">'+nn+'</td><td>'+(nn?(pr3>=pv?'+':'')+Math.round((pr3-pv)*1000)/10:'—')+'</td>'+
+      '<td class="'+(Math.abs(zt(pr3,pv,nn))>2.6?'rw':'na')+'">'+zt(pr3,pv,nn)+'</td></tr>';
+  }
+  $('tDigit').innerHTML=dg;
+
+  var brT=R.baseRep.w+R.baseRep.l, brP=brT?R.baseRep.w/brT:0, rp='';
+  for(v3=0;v3<=9;v3++){
+    var q=R.repSide[v3],tq=q.w+q.l; if(!tq)continue;
+    var pq=q.w/tq;
+    rp+='<tr'+((v3===8||v3===9)?' class="sel"':'')+'><td>'+v3+'</td><td>'+q.w+'-'+q.l+'</td>'+
+      '<td class="'+(pq>=brP?'rw':'rl')+'">'+pc(q.w,tq)+'%</td><td class="na">'+Math.round(brP*1000)/10+'%</td>'+
+      '<td>'+(pq>=brP?'+':'')+Math.round((pq-brP)*1000)/10+'</td>'+
+      '<td class="'+(Math.abs(zt(pq,brP,tq))>2.6?'rw':'na')+'">'+zt(pq,brP,tq)+'</td></tr>';
+  }
+  $('tRepeat').innerHTML=rp||'<tr><td colspan="6" class="na" style="text-align:center">no data yet</td></tr>';
+
+  var E=expRuns(R),rn='';
+  [9,8].forEach(function(v4){
+    for(var L=1;L<=4;L++){
+      var o=R.runs[v4+'x'+L]||0,e=E[v4+'x'+L]||0,d=Math.round((o-e)*10)/10;
+      rn+='<tr><td>'+String(v4).repeat(L)+(L===4?'+':'')+'</td><td>'+o+'</td><td class="na">'+e+'</td>'+
+        '<td class="'+(Math.abs(d)>2*Math.sqrt(Math.max(1,e))?(d>0?'rw':'rl'):'na')+'">'+(d>=0?'+':'')+d+'</td></tr>';
+    }
+  });
+  $('tRun').innerHTML=rn;
+
+  /* data chips */
+  $('chips').innerHTML=EXT.length?EXT.map(function(d){
+    var hh2=0; d.shoes.forEach(function(s){hh2+=s.length;});
+    return '<span class="fchip">'+d.name+' · <b>'+d.shoes.length+'</b> shoes · '+hh2+' hands<span class="x" onclick="dropDS(\''+d.name.replace(/'/g,"\\'")+'\')">×</span></span>';
+  }).join(''):'<span class="empty">nothing loaded — the board is the only data source</span>';
+
+  /* verdict */
+  var w=pc(A.w1,A.n1), h95=ci95(p1,A.n1);
+  var lo=Math.round((w-h95)*10)/10, hi=Math.round((w+h95)*10)/10, bl=pc(B.w1,B.n1);
+  var V=[];
+  V.push('Data: <b>'+shoes.length+' shoes · '+R.N+' hands</b>. Current signal fired <b>'+A.n1+'</b> times. Bet-1 win <b>'+w+'%</b>, plausible range <b>'+lo+'–'+hi+'%</b>. Baseline on the same rule: <b>'+bl+'%</b>.');
+  if(A.n1<150) V.push('<span class="warn">Sample too small to mean anything.</span> That range is wide enough to swallow the baseline whole. ~150 signals is the floor for a first look, 300+ before you would bet on it.');
+  else if(Math.abs(z1)<2) V.push('The trigger is <span class="warn">indistinguishable from the baseline</span> (z='+z1+'). Right now the 8/9 combo is decoration on a rule that would perform the same without it.');
+  else if(z1>=2) V.push('The trigger beats its own baseline by <b>'+d1+' points</b> (z='+z1+'). Before believing it: check the same cell in the sweep — if you picked it <i>because</i> it was the brightest cell, the z is inflated. Test it on shoes you have not looked at yet.');
+  else V.push('The trigger is <span class="warn">worse than its baseline</span> by '+Math.abs(d1)+' points (z='+z1+'). Betting the opposite side is not the fix — check the "Bet side" rule instead.');
+  V.push('Two numbers matter and the rest is scenery: the <b>digit-repeat table</b> (does a 9 predict a 9 at all?) and <b>bet-1 vs baseline</b>. Everything else — depth, cross-tabs, hand buckets — only becomes interesting once one of those two moves.');
+  V.push('Structural priors, so you know what you are fighting: Banker wins 45.86%, Player 44.62%, Tie 9.52%. Banker after commission needs 51.3% of decided hands; Player needs 50.0%. A 9 showing up does not change the composition of the shoe by anything you can bet on — the depletion effect is real but it is roughly 0.01% per removed card, which is three orders of magnitude below what you would need. If this tool ever shows you a genuine edge, the far more likely explanations are a logging bias or a small sample, in that order.');
+  $('verdict').innerHTML=V.join('<br><br>');
+
+  $('foot').innerHTML='Runs of 8s and 9s count <b>every</b> hand including ties — a tie on 9 is still a 9. Bead lead = the current column of 6 in game order, ties ignored. '+
+    'Alignment "Both" is your existing STRI9ES setup. Ties push and never consume a bet. Whether a fire counts is decided by how many hands <b>remain after it</b>, never by how it turned out: bet-1 uses every fire with a non-tie hand behind it, '+
+    'the depth table only uses fires with room to lose every bet in a row. Judging inclusion on the outcome is how a shoe ending quietly deletes your losses and hands you a fake edge. '+
+    'Horizontal / cross-column ordering is not implemented yet — everything here is game order, vertical.';
+}
+function pick(t,a){ $('cTrig').value=t; $('cAlign').value=a; save(); render(); }
+function pickShape(t,q){ $('cTrig').value=t; $('cShape').value=q; save(); render(); }
+function toggleSec(id,btn,lab){
+  var e=$(id),on=!e.classList.contains('on');
+  e.classList.toggle('on',on);
+  btn.textContent=(on?'▾ ':'▸ ')+lab;
+}
+function dropDS(n){ EXT=EXT.filter(function(x){return x.name!==n;}); render(); }
+function clearData(){ EXT=[]; render(); }
+
+/* ============ csv ============ */
+function exportCSV(){
+  var rows=['shoe,hand,side,point,bpair,ppair'],sh=boardShoes();
+  for(var s=0;s<sh.length;s++)for(var i=0;i<sh[s].length;i++){
+    var h=sh[s][i];
+    rows.push([s+1,i+1,h.side,h.pt,h.bp?1:0,h.pp?1:0].join(','));
+  }
+  var b=new Blob([rows.join('\n')],{type:'text/csv'}),u=URL.createObjectURL(b),a=document.createElement('a');
+  a.href=u;a.download='stri9es_terminator_hands.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);
+}
+function parseCSV(txt,name){
+  var lines=txt.trim().split(/\r?\n/).filter(function(l){return l.trim();});
+  if(lines.length<2)return null;
+  var head=lines[0].toLowerCase().split(',').map(function(s){return s.trim();});
+  var iS=head.indexOf('shoe'),iD=head.indexOf('side'),iP=head.indexOf('point'),iB=head.indexOf('bpair'),iL=head.indexOf('ppair');
+  if(iD<0||iP<0)return null;
+  var map={};
+  for(var i=1;i<lines.length;i++){
+    var c=lines[i].split(',').map(function(s){return s.trim();});
+    var sd=(c[iD]||'').toUpperCase().charAt(0);
+    if(sd!=='B'&&sd!=='P'&&sd!=='T')continue;
+    var pt=parseInt(c[iP]); if(isNaN(pt)||pt<0||pt>9)continue;
+    var sh=(iS>=0?c[iS]:'1')||'1';
+    (map[sh]=map[sh]||[]).push({side:sd,pt:pt,bp:iB>=0&&c[iB]==='1',pp:iL>=0&&c[iL]==='1'});
+  }
+  var shoes=Object.keys(map).map(function(k){return map[k];}).filter(function(s){return s.length;});
+  return shoes.length?{name:name,shoes:shoes}:null;
+}
+function loadFiles(e){
+  var files=Array.prototype.slice.call(e.target.files,0,12),pending=files.length;
+  if(!pending)return;
+  files.forEach(function(f){
+    var rd=new FileReader();
+    rd.onload=function(){
+      var d=parseCSV(String(rd.result),f.name);
+      if(d){ EXT=EXT.filter(function(x){return x.name!==d.name;}); EXT.push(d); }
+      if(--pending===0)render();
+    };
+    rd.onerror=function(){ if(--pending===0)render(); };
+    rd.readAsText(f);
+  });
+  e.target.value='';
+}
+
+/* ============ boot ============ */
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify({events:events,trig:$('cTrig').value,align:$('cAlign').value,rule:$('cRule').value,max:$('cMax').value,shape:$('cShape').value})); }catch(e){} }
+(function(){
+  var h='';
+  for(var i=0;i<TRIGS.length;i++)h+='<option value="'+TRIGS[i].k+'"'+(TRIGS[i].k==='9x1'?' selected':'')+'>'+TRIGS[i].lab+'</option>';
+  $('cTrig').innerHTML=h;
+  try{
+    var d=JSON.parse(localStorage.getItem(KEY));
+    if(d){
+      events=d.events||[];
+      if(d.trig)$('cTrig').value=d.trig;
+      if(d.align)$('cAlign').value=d.align;
+      if(d.rule)$('cRule').value=d.rule;
+      if(d.max)$('cMax').value=d.max;
+      if(d.shape)$('cShape').value=d.shape;
+    }
+  }catch(e){}
+  render();
+})();
+</script>
+</body>
+</html>
