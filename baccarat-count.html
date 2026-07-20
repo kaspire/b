@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baccarat Point-Count Tracker</title>
+<style>
+:root{--ink:#16244a;--red:#e03131;--red-d:#c92a2a;--blue:#3b5bdb;--blue-d:#2f49b5;--green:#2f9e44;--green-b:#37b24d;
+--gray:#868e96;--gray-d:#5c636a;--page:#dfe6f3;--card-border:#e2e8f5;--soft:#f4f7fc;--yellow:#f7c948;--tie:#12b886;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Roboto,system-ui,-apple-system,sans-serif;background:var(--page);color:var(--ink);padding:22px 14px 50px;min-height:100vh}
+.app{max-width:920px;margin:0 auto;background:#fff;border:5px solid var(--ink);border-radius:22px;padding:14px;display:flex;flex-direction:column;gap:14px;box-shadow:0 18px 40px rgba(22,36,74,.22)}
+.panel{background:#fff;border:2px solid var(--card-border);border-radius:16px;padding:16px}
+h1{font-size:20px;font-weight:800}.tag{color:var(--gray-d);font-size:12.5px;margin-top:-6px}
+/* board */
+.board-panel{background:var(--soft);overflow-x:auto}
+.board{display:flex;gap:5px;min-height:182px}
+.bcol{display:flex;flex-direction:column;gap:5px}
+.cell{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#fff;position:relative;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.cell.pos{background:var(--green-b)}.cell.neg{background:var(--red)}.cell.zero{background:var(--gray)}
+.cell.empty{background:#fff;border:1.5px solid #d7e0f1;box-shadow:none}
+.cell.trig{outline:3px solid var(--yellow);outline-offset:1px}
+.cell .rst{position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:var(--ink);border:2px solid #fff}
+/* count gauge + alert */
+.gauge-wrap{margin-bottom:14px}
+.gauge-top{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--gray-d);margin-bottom:5px}
+.gauge{position:relative;height:26px;background:linear-gradient(90deg,rgba(224,49,49,.15),rgba(134,142,150,.12) 50%,rgba(47,158,68,.15));border-radius:13px;border:1.5px solid var(--card-border)}
+.gauge .mid{position:absolute;left:50%;top:0;bottom:0;width:2px;background:#c3ccdd;transform:translateX(-1px)}
+.gauge .thr{position:absolute;top:0;bottom:0;width:2px;background:rgba(22,36,74,.25)}
+.gauge .mk{position:absolute;top:-4px;height:34px;width:34px;border-radius:50%;transform:translateX(-17px);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;transition:left .15s;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.mk.pos{background:var(--green)}.mk.neg{background:var(--red)}.mk.zero{background:var(--gray)}
+.betbar{text-align:center;color:#fff;font-weight:800;font-size:23px;padding:15px;border-radius:12px;background:var(--gray)}
+.betbar.B{background:var(--red)}.betbar.P{background:var(--blue)}.betbar.T{background:var(--tie)}
+.subline{text-align:center;color:var(--gray-d);font-size:14px;margin-top:9px}
+/* stats */
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat{background:#fff;border:2px solid var(--card-border);border-radius:14px;padding:14px 10px;text-align:center}
+.stat .lab{font-size:13px;font-weight:700;color:var(--gray-d)}
+.stat .val{font-size:26px;font-weight:800;margin-top:4px}
+.stat .val.pos{color:var(--green)}.stat .val.neg{color:var(--red)}
+.stat.pl .lab{color:var(--green)}
+/* dots */
+.dots-panel{padding:12px}
+.dots{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;min-height:14px}
+.dot{width:13px;height:13px;border-radius:50%}
+.dot.W{background:var(--green-b)}.dot.L{background:var(--red)}.dot.T{background:var(--tie)}
+/* input */
+.inrow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.inlabel{width:78px;font-size:13px;font-weight:800;letter-spacing:.5px;color:#fff;padding:8px 0;text-align:center;border-radius:9px}
+.inlabel.bank{background:var(--red)}.inlabel.play{background:var(--blue)}
+.digits{display:flex;gap:5px;flex-wrap:wrap;flex:1}
+.dbtn{flex:1;min-width:34px;font-family:inherit;font-size:17px;font-weight:800;color:var(--ink);background:var(--soft);border:2px solid var(--card-border);border-radius:9px;padding:9px 0;cursor:pointer;transition:.1s}
+.dbtn:hover{border-color:var(--gray)}
+.dbtn.sel-b{background:var(--red);color:#fff;border-color:var(--red)}
+.dbtn.sel-p{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pending{text-align:center;font-size:14px;font-weight:700;color:var(--gray-d);margin-top:4px}
+.pending b{color:var(--ink);font-size:18px}
+/* controls */
+.controls{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;justify-content:center}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:13px;font-weight:700;color:var(--gray-d)}
+.field input{font-family:inherit;font-size:18px;font-weight:700;width:110px;padding:9px 12px;border:2px solid var(--card-border);border-radius:10px;color:var(--ink);text-align:center}
+button{font-family:inherit;cursor:pointer;color:#fff;font-weight:800;font-size:17px;border:none;border-radius:12px;padding:12px 20px;transition:.12s}
+button:active{transform:translateY(1px)}
+.b-undo{background:var(--gray)}.b-new{background:var(--ink)}.b-reset{background:var(--gray-d)}
+.toggles{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:center}
+.sw{display:inline-flex;align-items:center;gap:9px;cursor:pointer;user-select:none;font-size:14px;font-weight:700;color:var(--gray-d)}
+.sw input{width:20px;height:20px;accent-color:var(--ink);cursor:pointer}
+.foot{text-align:center;color:var(--gray-d);font-size:12px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="app">
+  <div><h1>Point-Count Tracker</h1><div class="tag">Score each hand from the two point totals; the count drives the bet.</div></div>
+
+  <div class="panel board-panel"><div class="board" id="board"></div></div>
+
+  <div class="panel">
+    <div class="gauge-wrap">
+      <div class="gauge-top"><span>Player −3</span><span id="countLbl">Count 0</span><span>+3 Banker</span></div>
+      <div class="gauge" id="gauge"><div class="mid"></div></div>
+    </div>
+    <div class="betbar" id="betbar">Watching…</div>
+    <div class="subline" id="subline"></div>
+  </div>
+
+  <div class="grid4">
+    <div class="stat"><div class="lab">Wins</div><div class="val" id="wins">0</div></div>
+    <div class="stat"><div class="lab">Losses</div><div class="val" id="losses">0</div></div>
+    <div class="stat"><div class="lab">Hands</div><div class="val" id="hands">0</div></div>
+    <div class="stat pl"><div class="lab">Profit / Loss</div><div class="val" id="pnl">0.00</div></div>
+  </div>
+
+  <div class="panel dots-panel"><div class="dots" id="dots"></div></div>
+
+  <div class="grid3">
+    <div class="stat"><div class="lab">Current Bet</div><div class="val" id="curbet">1.00</div></div>
+    <div class="stat"><div class="lab">Bankroll</div><div class="val" id="bankroll">1000.00</div></div>
+    <div class="stat"><div class="lab">Shoe +/−</div><div class="val" id="shoe">0</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="inrow"><span class="inlabel bank">BANKER</span><div class="digits" id="bdigits"></div></div>
+    <div class="inrow"><span class="inlabel play">PLAYER</span><div class="digits" id="pdigits"></div></div>
+    <div class="pending" id="pending">Tap a Banker point, then a Player point.</div>
+  </div>
+
+  <div class="panel controls">
+    <div class="field"><label>Base Bet</label><input id="base" type="number" min="0.01" step="0.5" value="1" oninput="save();render()"></div>
+    <div class="field"><label>Start Bankroll</label><input id="start" type="number" step="50" value="1000" oninput="save();render()"></div>
+    <button class="b-undo" onclick="undo()">Undo</button>
+    <button class="b-new" onclick="newShoe()">New Shoe</button>
+    <button class="b-reset" onclick="resetAll()">Reset All</button>
+  </div>
+
+  <div class="panel toggles">
+    <label class="sw"><input type="checkbox" id="resetWin" checked onchange="save();render()"> Reset count to 0 after a win</label>
+    <label class="sw"><input type="checkbox" id="tieOn" checked onchange="save();render()"> Tie alerts (count returns to 0)</label>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const KEY='baccaratCount_v1';
+let hands=[], pendB=null, pendP=null;
+function getBase(){const v=parseFloat(document.getElementById('base').value);return isNaN(v)||v<=0?1:v;}
+function getStart(){const v=parseFloat(document.getElementById('start').value);return isNaN(v)?0:v;}
+function opt(){return{base:getBase(),resetOnWin:document.getElementById('resetWin').checked,tieOn:document.getElementById('tieOn').checked};}
+function fmt(n){return (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+function scoreOf(b,p){
+  if(b===0||p===0){ if(b===0&&p===0)return -1; const o=(b===0)?p:b; return (o%2===1)?1:-1; }
+  const be=b%2===0, pe=p%2===0;
+  if(be&&pe)return -2; if(!be&&!pe)return 2; return 0;
+}
+
+function replay(){
+  const{base,resetOnWin,tieOn}=opt();
+  let wins=0,losses=0,pushes=0,pnl=0; const recent=[];
+  let count=0,shoeTotal=0,board=[],phase='idle',betNum=1;
+  for(const ev of hands){
+    if(ev.shoe){count=0;shoeTotal=0;board=[];phase='idle';betNum=1;continue;}
+    const {b,p}=ev, d=scoreOf(b,p), winner=b>p?'B':(p>b?'P':'T'), wasBetting=phase!=='idle', prevCount=count;
+    count+=d; shoeTotal+=d;
+    let runCount=count,resetAfter=false;
+    if(wasBetting){
+      const stake=phase==='bettingT'?base:base*Math.pow(2,betNum-1);
+      let res;
+      if(phase==='bettingT')res=winner==='T'?'win':'loss';
+      else if(phase==='bettingB')res=winner==='B'?'win':(winner==='P'?'loss':'push');
+      else res=winner==='P'?'win':(winner==='B'?'loss':'push');
+      if(res==='win'){wins++;pnl+=stake;recent.push('W');phase='idle';betNum=1;if(resetOnWin){count=0;resetAfter=true;}}
+      else if(res==='loss'){losses++;pnl-=stake;recent.push('L');betNum++;if(betNum>3){phase='idle';betNum=1;count=0;resetAfter=true;}}
+      else{pushes++;recent.push('T');}
+    }else{
+      if(count>=3){phase='bettingB';betNum=1;}
+      else if(count<=-3){phase='bettingP';betNum=1;}
+      else if(tieOn&&count===0&&prevCount!==0){phase='bettingT';betNum=1;}
+    }
+    board.push({d,run:runCount,resetAfter,trig:(!wasBetting&&(runCount>=3||runCount<=-3))});
+  }
+  const stake=phase==='bettingT'?base:base*Math.pow(2,betNum-1);
+  const side=phase==='bettingB'?'B':phase==='bettingP'?'P':phase==='bettingT'?'T':null;
+  return{wins,losses,pushes,pnl,recent,count,shoeTotal,board,phase,betNum,stake,side};
+}
+
+function render(){
+  const st=replay();
+
+  // board (fill 4-per-column)
+  const cells=st.board.map(c=>{
+    const cls=c.run>0?'pos':c.run<0?'neg':'zero';
+    return `<div class="cell ${cls}${c.trig?' trig':''}">${c.run>0?'+':''}${c.run}${c.resetAfter?'<span class="rst"></span>':''}</div>`;
+  });
+  const cols=[]; for(let i=0;i<cells.length;i++){if(i%4===0)cols.push([]);cols[cols.length-1].push(cells[i]);}
+  const DISP=Math.max(18,cols.length+1);
+  while(cols.length<DISP)cols.push([]);
+  document.getElementById('board').innerHTML=cols.map(col=>{
+    const c=col.slice(); while(c.length<4)c.push('<div class="cell empty"></div>');
+    return `<div class="bcol">${c.join('')}</div>`;
+  }).join('');
+
+  // gauge marker
+  const g=document.getElementById('gauge');
+  g.querySelectorAll('.mk,.thr').forEach(e=>e.remove());
+  [-3,3].forEach(t=>{const el=document.createElement('div');el.className='thr';el.style.left=(50+t/4*50)+'%';g.appendChild(el);});
+  const cc=Math.max(-4,Math.min(4,st.count));
+  const mk=document.createElement('div');
+  mk.className='mk '+(st.count>0?'pos':st.count<0?'neg':'zero');
+  mk.style.left=(50+cc/4*50)+'%'; mk.textContent=(st.count>0?'+':'')+st.count;
+  g.appendChild(mk);
+  document.getElementById('countLbl').textContent='Count '+(st.count>0?'+':'')+st.count;
+
+  // bet bar
+  const bar=document.getElementById('betbar'), sub=document.getElementById('subline');
+  if(st.side){
+    const nm=st.side==='B'?'BANKER':st.side==='P'?'PLAYER':'TIE';
+    bar.className='betbar '+st.side;
+    bar.textContent='BET '+nm+' — Bet '+st.betNum+'/3 — '+fmt(st.stake);
+    sub.textContent=st.side==='T'?'Flat bet, no martingale · win = a tie':'Martingale 1·2·4 · win = '+nm+' takes the hand';
+  }else{
+    bar.className='betbar';
+    bar.textContent='Watching…';
+    const need=st.count>=0?(3-st.count)+' more to Banker':'';
+    sub.textContent='Count '+(st.count>0?'+':'')+st.count+(st.count===0?' — even':(st.count>0?' · '+(3-st.count)+' from Banker':' · '+(3+st.count)+' from Player'));
+  }
+
+  // stats
+  document.getElementById('wins').textContent=st.wins;
+  document.getElementById('losses').textContent=st.losses;
+  document.getElementById('hands').textContent=hands.filter(h=>!h.shoe).length;
+  const pl=document.getElementById('pnl'); pl.textContent=(st.pnl>=0?'':'-')+fmt(Math.abs(st.pnl)); pl.className='val '+(st.pnl>=0?'pos':'neg');
+  document.getElementById('curbet').textContent=fmt(st.stake);
+  document.getElementById('bankroll').textContent=fmt(getStart()+st.pnl);
+  const sh=document.getElementById('shoe'); sh.textContent=(st.shoeTotal>0?'+':'')+st.shoeTotal; sh.className='val '+(st.shoeTotal>0?'pos':st.shoeTotal<0?'neg':'');
+
+  document.getElementById('dots').innerHTML=st.recent.slice(-20).map(r=>`<div class="dot ${r}"></div>`).join('')||'<span style="color:#aab2c5;font-size:13px">no bets resolved yet</span>';
+
+  // input digits
+  const dig=(row,sel)=>[0,1,2,3,4,5,6,7,8,9].map(n=>`<button class="dbtn${sel===n?(row==='b'?' sel-b':' sel-p'):''}" onclick="pick('${row}',${n})">${n}</button>`).join('');
+  document.getElementById('bdigits').innerHTML=dig('b',pendB);
+  document.getElementById('pdigits').innerHTML=dig('p',pendP);
+  const pe=document.getElementById('pending');
+  pe.innerHTML='Banker <b>'+(pendB===null?'—':pendB)+'</b> &nbsp;·&nbsp; Player <b>'+(pendP===null?'—':pendP)+'</b>'+
+    (pendB!==null&&pendP!==null?' &nbsp; (logging…)':'');
+
+  document.getElementById('foot').innerHTML='Score per hand: both odd +2 · both even −2 · mixed 0 · a 0 with odd +1 · a 0 with even −1. '+
+    'Count +3 → Banker, −3 → Player (martingale 1·2·4, max 3). Tie fires only when the count falls back to 0 from either side (flat, max 3). '+
+    'Board shows the running count; ● = a reset point. Count resets after a win'+(document.getElementById('resetWin').checked?'':' (off)')+' and always after a 3-loss bust. Shoe +/− never resets.';
+}
+
+function pick(row,n){
+  if(row==='b')pendB=n; else pendP=n;
+  if(pendB!==null&&pendP!==null){ hands.push({b:pendB,p:pendP}); pendB=null; pendP=null; save(); }
+  render();
+}
+function undo(){ if(pendB!==null||pendP!==null){pendB=null;pendP=null;} else hands.pop(); save(); render(); }
+function newShoe(){ hands.push({shoe:true}); save(); render(); }
+function resetAll(){ if(confirm('Clear everything?')){ hands=[];pendB=null;pendP=null; save(); render(); } }
+function save(){try{localStorage.setItem(KEY,JSON.stringify({hands,base:document.getElementById('base').value,start:document.getElementById('start').value,resetWin:document.getElementById('resetWin').checked,tieOn:document.getElementById('tieOn').checked}));}catch(e){}}
+try{const d=JSON.parse(localStorage.getItem(KEY));if(d){hands=d.hands||[];if(d.base!=null)document.getElementById('base').value=d.base;if(d.start!=null)document.getElementById('start').value=d.start;if(d.resetWin!=null)document.getElementById('resetWin').checked=d.resetWin;if(d.tieOn!=null)document.getElementById('tieOn').checked=d.tieOn;}}catch(e){}
+render();
+</script>
+</body>
+</html>
