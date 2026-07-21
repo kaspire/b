@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baccarat Scorecard · H5</title>
+<style>
+:root{--line:#e4e7ee;--line2:#eef1f6;--ink:#1f2733;--mut:#8a94a6;--blue:#2f6fed;--red:#e0364a;
+--neg:#d13b4c;--pos:#26324a;--zero:#aab2c2;--grey-bg:#eef1f6;--head:#f7f9fc;--x:#5a6474;
+--yellow:#fff3a8;--yellow-b:#ffe873;--green:#1f9d57;--bp:#e7f0ff;--bp2:#cfe0ff;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;background:#fff;color:var(--ink);padding:30px 16px 60px;-webkit-font-smoothing:antialiased}
+.card{max-width:1000px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 6px 26px rgba(31,39,51,.06)}
+.head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+h1{font-size:20px;font-weight:800}.sub{color:var(--mut);font-size:12.5px;margin-bottom:16px}
+.counts{font-size:12.5px;color:var(--mut);font-weight:600}.counts b{color:var(--ink)}.counts .cp{color:var(--blue)}.counts .cb{color:var(--red)}
+.alert{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.alert.watch{background:var(--head)}
+.alert.B{background:linear-gradient(90deg,rgba(224,54,74,.1),rgba(224,54,74,.02));border-color:#f2b8c1}
+.alert.P{background:linear-gradient(90deg,rgba(47,111,237,.1),rgba(47,111,237,.02));border-color:#b7cdfb}
+.alert .big{font-size:19px;font-weight:800}.alert.B .big{color:var(--red)}.alert.P .big{color:var(--blue)}
+.alert .lil{font-size:12px;color:var(--mut);font-weight:600;margin-top:2px}
+.prog{display:flex;gap:6px}
+.pchip{width:34px;height:34px;border-radius:9px;background:var(--head);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--mut)}
+.pchip.on{background:var(--ink);color:#fff;border-color:var(--ink)}.pchip.done{background:var(--green);color:#fff;border-color:var(--green)}
+.mmrow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.mm{border:1px solid var(--line);border-radius:11px;padding:10px 8px;text-align:center}
+.mm .l{font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.mm .v{font-size:20px;font-weight:800;margin-top:3px}.mm .v.pos{color:var(--green)}.mm .v.neg{color:var(--neg)}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;white-space:nowrap;min-width:100%}
+th,td{border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);text-align:center;font-size:13px;height:34px;min-width:34px;padding:0 6px}
+thead th{background:var(--head);font-weight:800;color:var(--mut);font-size:11.5px;position:sticky;top:0;height:32px}
+tbody tr:last-child td{border-bottom:none}
+th.fix,td.fix{position:sticky;background:#fff;z-index:1}th.fix{background:var(--head)}
+.c-num{left:0;min-width:40px;font-weight:800;color:var(--mut)}
+.c-p{left:40px;min-width:38px}.c-b{left:78px;min-width:38px}
+.c-s{left:116px;min-width:40px;border-right:2px solid var(--line)}th.c-s{border-right:2px solid var(--line)}
+td.c-p.bp{background:var(--bp)}td.c-b.bp{background:var(--bp)}
+td.c-p.bp.live{background:var(--bp2)}td.c-b.bp.live{background:var(--bp2)}
+.dot{display:inline-block;width:15px;height:15px;border-radius:50%}.dot.p{background:var(--blue)}.dot.b{background:var(--red)}
+.s-w{color:var(--green);font-weight:800}.s-l{color:var(--red);font-weight:800}
+td.val{color:var(--pos);font-weight:600}td.val.neg{color:var(--neg)}td.val.zero{color:var(--zero)}
+td.val.x{color:var(--x);font-weight:800}td.val.four{font-weight:800}td.val.opened{background:var(--grey-bg)}
+td.val.h5{background:var(--yellow)}td.val.h5.live{background:var(--yellow-b);box-shadow:inset 0 0 0 2px #f2c200}
+td.empty{background:#fff}
+.emptymsg{text-align:center;color:var(--mut);font-size:13px;padding:26px}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:20px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.field input{font-family:inherit;font-size:16px;font-weight:700;width:90px;padding:10px;border:1px solid var(--line);border-radius:10px;color:var(--ink);text-align:center}
+button{font-family:inherit;cursor:pointer;font-weight:800;border:none;border-radius:11px;transition:.12s;color:#fff}
+button:active{transform:translateY(1px)}
+.b-p{background:var(--blue);font-size:17px;padding:14px 28px}.b-b{background:var(--red);font-size:17px;padding:14px 28px}
+.b-u{background:#eef1f6;color:var(--ink);font-size:14px;padding:14px 18px}
+.b-r{background:#fff;color:var(--red);border:1px solid #f2c6cd;font-size:14px;padding:14px 18px}
+.note{font-size:11.5px;color:var(--mut);margin-top:14px;line-height:1.6}.note b{color:var(--ink)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--mut);font-weight:600}
+.legend span{display:inline-flex;align-items:center;gap:5px}.sw{width:13px;height:13px;border-radius:3px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="head"><h1>Baccarat Scorecard · H5</h1><div class="counts" id="counts"></div></div>
+  <div class="sub">H5 → column to <b>0</b>. Band → column oscillating in {1,2} or {−1,−2}. Off-card: <b>BPB/PBP</b> chop, <b>5-streak</b> ride. Scorecard signals bet first.</div>
+
+  <div class="alert watch" id="alert"><div><div class="big" id="alertBig">Watching…</div><div class="lil" id="alertLil"></div></div>
+    <div class="prog" id="prog"></div></div>
+
+  <div class="mmrow">
+    <div class="mm"><div class="l">Base</div><div class="v" id="mmBase">1</div></div>
+    <div class="mm"><div class="l">Next stake</div><div class="v" id="mmNext">1</div></div>
+    <div class="mm"><div class="l">P&amp;L (u)</div><div class="v" id="mmPnl">0</div></div>
+    <div class="mm"><div class="l">W – L</div><div class="v" id="mmWL">0–0</div></div>
+    <div class="mm"><div class="l">Targets (+10)</div><div class="v" id="mmTgt">0</div></div>
+  </div>
+
+  <div class="scroll"><div id="tableWrap"></div></div>
+  <div class="legend">
+    <span><span class="sw" style="background:var(--yellow)"></span> H5 / band setup</span>
+    <span><span class="sw" style="background:var(--bp)"></span> BP visual (chop / streak)</span>
+    <span><span class="sw" style="background:var(--grey-bg)"></span> column opened</span>
+  </div>
+
+  <div class="controls">
+    <div class="field"><label>Base bet</label><input id="base" type="number" min="0.5" step="0.5" value="1" oninput="save();render()"></div>
+    <button class="b-p" onclick="add('P')">● Player</button>
+    <button class="b-b" onclick="add('B')">● Banker</button>
+    <button class="b-u" onclick="undo()">Undo</button>
+    <button class="b-r" onclick="reset()">New Card</button>
+  </div>
+  <div class="note">One global plan <b>1·2·3·4</b> — a win steps up, four straight = <b>+10u</b> (shoe done); any loss bumps base +1 and restarts. The 5-streak is the only bet that keeps riding itself after a win. Ties aren't recorded.</div>
+</div>
+
+<script>
+const KEY='baccaratScorecard_v3';
+let outcomes=[];
+function getBase(){const v=parseFloat(document.getElementById('base').value);return isNaN(v)||v<=0?1:v;}
+const opp=s=>s==='B'?'P':'B';
+
+function build(outcomes){
+  const cols=[]; const opened=new Set();
+  for(let r=0;r<outcomes.length;r++){
+    const delta=r>0?(outcomes[r]!==outcomes[r-1]?1:-1):null;
+    for(const col of cols){
+      if(col.state==='stopped')continue;
+      if(col.state==='limit'){col.cells[r]='X';col.state='stopped';continue;}
+      if(delta===null)continue;
+      const nv=col.value+delta;col.value=nv;col.cells[r]=nv;
+      if(Math.abs(nv)===4)col.state='limit';
+    }
+    let hasPos=false,hasNeg=false;
+    for(const col of cols){const v=col.cells[r];if(v===1)hasPos=true;if(v===-1)hasNeg=true;}
+    if(!hasPos){const idx=cols.length;cols.push({cells:{[r]:1},value:1,state:'active'});opened.add(r+'-'+idx);}
+    if(!hasNeg){const idx=cols.length;cols.push({cells:{[r]:-1},value:-1,state:'active'});opened.add(r+'-'+idx);}
+  }
+  return {cols,opened};
+}
+
+function engine(outcomes){
+  const base0=getBase();
+  const {cols,opened}=build(outcomes);
+  const nRows=outcomes.length;
+  const num=v=>typeof v==='number';
+  function signal(c,r){
+    if(r<4)return null;
+    const w=[];for(let k=r-4;k<=r;k++){const v=cols[c].cells[k];if(!num(v))return null;w.push(v);}
+    const cur=w[4],last=outcomes[r];
+    if(w.every(v=>v>=-1&&v<=1)){if(Math.abs(cur)!==1)return null;return{band:'center',side:(cur===1?last:opp(last))};}
+    if(w.every(v=>v>=1&&v<=2))return{band:'upper',side:(cur===1?opp(last):last)};
+    if(w.every(v=>v>=-2&&v<=-1))return{band:'lower',side:(cur===-1?last:opp(last))};
+    return null;
+  }
+  const allSame=(i,j)=>{for(let k=i+1;k<=j;k++)if(outcomes[k]!==outcomes[i])return false;return true;};
+  const alt3=(r)=>outcomes[r-2]!==outcomes[r-1]&&outcomes[r-1]!==outcomes[r];
+  let base=base0,level=1,pnl=0,wins=0,losses=0,targets=0;
+  const sMarks={},sSrc={},hl=new Set(),canFire={},fireBand={};
+  let pending=null,liveBet=null;
+  for(let r=0;r<nRows;r++){
+    if(pending&&pending.targetRow===r){
+      const win=(outcomes[r]===pending.side);
+      sMarks[r]=win?'W':'L';sSrc[r]=pending.source;
+      if(win){pnl+=pending.stake;wins++;level++;
+        if(level>4){targets++;level=1;base=base0;pending=null;}
+        else if(pending.ride){pending={side:pending.side,stake:base*level,targetRow:r+1,source:'streak',ride:true};}
+        else pending=null;
+      }else{pnl-=pending.stake;losses++;base+=1;level=1;pending=null;}
+    }
+    for(let c=0;c<cols.length;c++){
+      if(canFire[c]===undefined)canFire[c]=true;
+      if(!canFire[c]&&fireBand[c]){const v=cols[c].cells[r];if(num(v)){
+        if(fireBand[c]==='center'&&Math.abs(v)>=2)canFire[c]=true;
+        else if(fireBand[c]==='upper'&&(v<=0||v>=3))canFire[c]=true;
+        else if(fireBand[c]==='lower'&&(v>=0||v<=-3))canFire[c]=true;}}
+    }
+    if(!pending){
+      let sc=null;
+      for(let c=0;c<cols.length;c++){if(!canFire[c])continue;const sg=signal(c,r);if(sg){sc={col:c,...sg};break;}}
+      if(sc){pending={side:sc.side,stake:base*level,targetRow:r+1,source:'sc-'+sc.band,col:sc.col};
+        canFire[sc.col]=false;fireBand[sc.col]=sc.band;for(let k=r-4;k<=r;k++)hl.add(k+'-'+sc.col);}
+      else if(r>=4&&allSame(r-4,r))pending={side:outcomes[r],stake:base*level,targetRow:r+1,source:'streak',ride:true,bpRows:[r-4,r]};
+      else if(r>=2&&alt3(r))pending={side:opp(outcomes[r]),stake:base*level,targetRow:r+1,source:'chop',bpRows:[r-2,r]};
+    }
+  }
+  if(pending&&pending.targetRow===nRows)liveBet=pending;
+  return {cols,opened,sMarks,sSrc,hl,base,level,pnl,wins,losses,targets,liveBet,nextStake:base*level};
+}
+
+const SRC={'sc-center':'H5 → 0','sc-upper':'Band 1·2','sc-lower':'Band −1·−2','streak':'5-streak ride','chop':'3-chop'};
+function fmt(n){return (Math.round(n*100)/100).toLocaleString(undefined,{maximumFractionDigits:2});}
+
+function render(){
+  const st=engine(outcomes);
+  const {cols,opened,sMarks,hl}=st, nCols=cols.length, nRows=outcomes.length;
+  const lb=st.liveBet;
+
+  const al=document.getElementById('alert');
+  if(lb){
+    const nm=lb.side==='B'?'BANKER':'PLAYER';
+    al.className='alert '+lb.side;
+    document.getElementById('alertBig').textContent='BET '+nm+' · '+fmt(lb.stake)+'u';
+    document.getElementById('alertLil').textContent=SRC[lb.source]+(lb.col!=null?' · col '+(lb.col+1):'')+' · step '+st.level+' of 4';
+  }else{
+    al.className='alert watch';
+    document.getElementById('alertBig').textContent='Watching…';
+    document.getElementById('alertLil').textContent=nRows<3?'need more outcomes':'no signal right now';
+  }
+  document.getElementById('prog').innerHTML=[1,2,3,4].map(i=>{
+    const done=(i<st.level),on=(i===st.level&&lb);
+    return '<div class="pchip'+(done?' done':'')+(on?' on':'')+'">'+i+'</div>';}).join('');
+  document.getElementById('mmBase').textContent=fmt(st.base);
+  document.getElementById('mmNext').textContent=fmt(st.nextStake);
+  const pl=document.getElementById('mmPnl');pl.textContent=(st.pnl>=0?'+':'')+fmt(st.pnl);pl.className='v '+(st.pnl>=0?'pos':'neg');
+  document.getElementById('mmWL').textContent=st.wins+'–'+st.losses;
+  document.getElementById('mmTgt').textContent=st.targets;
+
+  // live BP-visual outcome tint
+  const bpLive=new Set();
+  if(lb&&lb.bpRows){for(let k=lb.bpRows[0];k<=lb.bpRows[1];k++)bpLive.add(k);}
+
+  const gridCount=Math.max(nCols,10);
+  let head='<tr><th class="fix c-num">#</th><th class="fix c-p">P</th><th class="fix c-b">B</th><th class="fix c-s">S</th>';
+  for(let c=0;c<gridCount;c++)head+='<th>'+(c+1)+'</th>';head+='</tr>';
+  let body='';
+  if(nRows===0){
+    body='<tr><td class="fix c-num">1</td><td class="fix c-p"></td><td class="fix c-b"></td><td class="fix c-s"></td>'+
+      '<td class="emptymsg" colspan="'+gridCount+'">Tap Player or Banker to start the card.</td></tr>';
+  }else{
+    for(let r=0;r<nRows;r++){
+      const o=outcomes[r],s=sMarks[r],bp=bpLive.has(r);
+      body+='<tr>';
+      body+='<td class="fix c-num">'+(r+1)+'</td>';
+      body+='<td class="fix c-p'+(bp&&o==='P'?' bp live':'')+'">'+(o==='P'?'<span class="dot p"></span>':'')+'</td>';
+      body+='<td class="fix c-b'+(bp&&o==='B'?' bp live':'')+'">'+(o==='B'?'<span class="dot b"></span>':'')+'</td>';
+      body+='<td class="fix c-s">'+(s?('<span class="s-'+s.toLowerCase()+'">'+s+'</span>'):'')+'</td>';
+      for(let c=0;c<gridCount;c++){
+        const v=(c<nCols)?cols[c].cells[r]:undefined;
+        if(v===undefined){body+='<td class="empty"></td>';continue;}
+        let cls='val';
+        if(v==='X')cls+=' x';else{if(v<0)cls+=' neg';else if(v===0)cls+=' zero';if(Math.abs(v)===4)cls+=' four';}
+        if(opened.has(r+'-'+c))cls+=' opened';
+        if(hl.has(r+'-'+c))cls+=' h5';
+        if(lb&&lb.col===c&&r>=nRows-5)cls+=' h5 live';
+        const disp=(v==='X')?'X':(v>0?'+'+v:''+v);
+        body+='<td class="'+cls+'">'+disp+'</td>';
+      }
+      body+='</tr>';
+    }
+  }
+  document.getElementById('tableWrap').innerHTML='<table><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
+  const pc=outcomes.filter(x=>x==='P').length,bc=outcomes.filter(x=>x==='B').length;
+  document.getElementById('counts').innerHTML='<b>'+nRows+'</b> hands &nbsp;·&nbsp; <span class="cp">P '+pc+'</span> &nbsp; <span class="cb">B '+bc+'</span> &nbsp;·&nbsp; <b>'+nCols+'</b> columns';
+}
+
+function add(o){outcomes.push(o);save();render();}
+function undo(){outcomes.pop();save();render();}
+function reset(){if(confirm('Start a new card? This clears the current one.')){outcomes=[];save();render();}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({outcomes,base:document.getElementById('base').value}));}catch(e){}}
+try{const d=JSON.parse(localStorage.getItem(KEY));if(d){outcomes=d.outcomes||[];if(d.base!=null)document.getElementById('base').value=d.base;}}catch(e){}
+render();
+</script>
+</body>
+</html>
