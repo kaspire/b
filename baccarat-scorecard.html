@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baccarat Scorecard</title>
+<style>
+:root{
+  --line:#e4e7ee;--line2:#eef1f6;--ink:#1f2733;--mut:#8a94a6;
+  --blue:#2f6fed;--red:#e0364a;--neg:#d13b4c;--pos:#26324a;--zero:#aab2c2;
+  --grey-bg:#eef1f6;--head:#f7f9fc;--x:#5a6474;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;background:#fff;color:var(--ink);padding:30px 16px 60px;-webkit-font-smoothing:antialiased}
+.card{max-width:960px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 6px 26px rgba(31,39,51,.06)}
+.head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+h1{font-size:20px;font-weight:800;letter-spacing:.2px}
+.sub{color:var(--mut);font-size:12.5px;margin-bottom:18px}
+.counts{font-size:12.5px;color:var(--mut);font-weight:600}
+.counts b{color:var(--ink)}
+.counts .cp{color:var(--blue)}.counts .cb{color:var(--red)}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;white-space:nowrap;min-width:100%}
+th,td{border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);text-align:center;font-size:13px;height:34px;min-width:34px;padding:0 6px}
+thead th{background:var(--head);font-weight:800;color:var(--mut);font-size:11.5px;position:sticky;top:0;height:32px}
+tbody tr:last-child td{border-bottom:none}
+th.fix,td.fix{position:sticky;background:#fff;z-index:1}
+th.fix{background:var(--head)}
+.c-num{left:0;min-width:40px;font-weight:800;color:var(--mut)}
+.c-p{left:40px;min-width:38px}
+.c-b{left:78px;min-width:38px}
+.c-s{left:116px;min-width:38px;border-right:2px solid var(--line)}
+th.c-s{border-right:2px solid var(--line)}
+.dot{display:inline-block;width:15px;height:15px;border-radius:50%}
+.dot.p{background:var(--blue)}.dot.b{background:var(--red)}
+td.val{color:var(--pos);font-weight:600}
+td.val.neg{color:var(--neg)}
+td.val.zero{color:var(--zero)}
+td.val.x{color:var(--x);font-weight:800}
+td.val.four{font-weight:800}
+td.val.opened{background:var(--grey-bg)}
+td.empty{background:#fff}
+.emptymsg{text-align:center;color:var(--mut);font-size:13px;padding:26px}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:20px}
+button{font-family:inherit;cursor:pointer;font-weight:800;border:none;border-radius:11px;transition:.12s;color:#fff}
+button:active{transform:translateY(1px)}
+.b-p{background:var(--blue);font-size:17px;padding:14px 30px}
+.b-b{background:var(--red);font-size:17px;padding:14px 30px}
+.b-u{background:#eef1f6;color:var(--ink);font-size:14px;padding:14px 18px}
+.b-r{background:#fff;color:var(--red);border:1px solid #f2c6cd;font-size:14px;padding:14px 18px}
+.note{font-size:11.5px;color:var(--mut);margin-top:14px;line-height:1.6}
+.note b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="head"><h1>Baccarat Scorecard</h1><div class="counts" id="counts"></div></div>
+  <div class="sub">Chop = +1, streak = −1. Every row carries a +1 and a −1; a new column opens (grey) when one is missing. A column stops at ±4 → X.</div>
+
+  <div class="scroll"><div id="tableWrap"></div></div>
+
+  <div class="controls">
+    <button class="b-p" onclick="add('P')">● Player</button>
+    <button class="b-b" onclick="add('B')">● Banker</button>
+    <button class="b-u" onclick="undo()">Undo</button>
+    <button class="b-r" onclick="reset()">New Card</button>
+  </div>
+  <div class="note">Ties are not recorded on the card. Next up once this feels right: pattern flags, betting alerts &amp; money management in the <b>S</b> column.</div>
+</div>
+
+<script>
+const KEY='baccaratScorecard_v1';
+let outcomes=[];
+
+function build(outcomes){
+  const cols=[]; const opened=new Set();
+  for(let r=0;r<outcomes.length;r++){
+    const delta = r>0 ? (outcomes[r]!==outcomes[r-1] ? 1 : -1) : null;
+    for(const col of cols){
+      if(col.state==='stopped') continue;
+      if(col.state==='limit'){ col.cells[r]='X'; col.state='stopped'; continue; }
+      if(delta===null) continue;
+      const nv=col.value+delta; col.value=nv; col.cells[r]=nv;
+      if(Math.abs(nv)===4) col.state='limit';
+    }
+    let hasPos=false,hasNeg=false;
+    for(const col of cols){ const v=col.cells[r]; if(v===1)hasPos=true; if(v===-1)hasNeg=true; }
+    if(!hasPos){ const idx=cols.length; cols.push({cells:{[r]:1},value:1,state:'active'}); opened.add(r+'-'+idx); }
+    if(!hasNeg){ const idx=cols.length; cols.push({cells:{[r]:-1},value:-1,state:'active'}); opened.add(r+'-'+idx); }
+  }
+  return {cols,opened};
+}
+
+function render(){
+  const {cols,opened}=build(outcomes);
+  const nCols=cols.length, nRows=outcomes.length;
+  const wrap=document.getElementById('tableWrap');
+
+  const gridHeadMin=10;
+  const gridCount=Math.max(nCols,gridHeadMin);
+  let head='<tr>'+
+    '<th class="fix c-num">#</th><th class="fix c-p">P</th><th class="fix c-b">B</th><th class="fix c-s">S</th>';
+  for(let c=0;c<gridCount;c++) head+='<th>'+(c+1)+'</th>';
+  head+='</tr>';
+
+  let body='';
+  if(nRows===0){
+    body='<tr><td class="fix c-num">1</td><td class="fix c-p"></td><td class="fix c-b"></td><td class="fix c-s"></td>'+
+      '<td class="emptymsg" colspan="'+gridCount+'">Tap Player or Banker to start the card.</td></tr>';
+  }else{
+    for(let r=0;r<nRows;r++){
+      const o=outcomes[r];
+      body+='<tr>';
+      body+='<td class="fix c-num">'+(r+1)+'</td>';
+      body+='<td class="fix c-p">'+(o==='P'?'<span class="dot p"></span>':'')+'</td>';
+      body+='<td class="fix c-b">'+(o==='B'?'<span class="dot b"></span>':'')+'</td>';
+      body+='<td class="fix c-s"></td>';
+      for(let c=0;c<gridCount;c++){
+        const v=(c<nCols)?cols[c].cells[r]:undefined;
+        if(v===undefined){ body+='<td class="empty"></td>'; continue; }
+        let cls='val';
+        if(v==='X')cls+=' x';
+        else{ if(v<0)cls+=' neg'; else if(v===0)cls+=' zero'; if(Math.abs(v)===4)cls+=' four'; }
+        if(opened.has(r+'-'+c))cls+=' opened';
+        const disp=(v==='X')?'X':(v>0?'+'+v:''+v);
+        body+='<td class="'+cls+'">'+disp+'</td>';
+      }
+      body+='</tr>';
+    }
+  }
+  wrap.innerHTML='<table><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
+
+  const pc=outcomes.filter(x=>x==='P').length, bc=outcomes.filter(x=>x==='B').length;
+  document.getElementById('counts').innerHTML='<b>'+nRows+'</b> hands &nbsp;·&nbsp; <span class="cp">P '+pc+'</span> &nbsp; <span class="cb">B '+bc+'</span> &nbsp;·&nbsp; <b>'+nCols+'</b> columns';
+}
+
+function add(o){outcomes.push(o);save();render();}
+function undo(){outcomes.pop();save();render();}
+function reset(){if(confirm('Start a new card? This clears the current one.')){outcomes=[];save();render();}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({outcomes}));}catch(e){}}
+try{const d=JSON.parse(localStorage.getItem(KEY));if(d)outcomes=d.outcomes||[];}catch(e){}
+render();
+</script>
+</body>
+</html>
