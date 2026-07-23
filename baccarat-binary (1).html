@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary Baccarat</title>
+<style>
+:root{--line:#e4e7ee;--line2:#eef1f6;--ink:#1f2733;--mut:#8a94a6;--blue:#2f6fed;--red:#e0364a;
+--neg:#d13b4c;--pos:#26324a;--zero:#aab2c2;--grey-bg:#eef1f6;--head:#f7f9fc;--x:#5a6474;
+--yellow:#fff3a8;--yellow-b:#ffe873;--green:#1f9d57;--gold:#f0ab00;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;background:#fff;color:var(--ink);padding:30px 16px 60px;-webkit-font-smoothing:antialiased}
+.card{max-width:1000px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 6px 26px rgba(31,39,51,.06)}
+.head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+h1{font-size:20px;font-weight:800}.sub{color:var(--mut);font-size:12.5px;margin-bottom:16px}
+.counts{font-size:12.5px;color:var(--mut);font-weight:600}.counts b{color:var(--ink)}.counts .cp{color:var(--blue)}.counts .cb{color:var(--red)}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;white-space:nowrap;min-width:100%}
+th,td{border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);text-align:center;font-size:13px;height:34px;min-width:34px;padding:0 6px}
+thead th{background:var(--head);font-weight:800;color:var(--mut);font-size:11.5px;position:sticky;top:0;height:32px}
+tbody tr:last-child td{border-bottom:none}
+th.fix,td.fix{position:sticky;background:#fff;z-index:1}th.fix{background:var(--head)}
+.c-num{left:0;min-width:40px;font-weight:800;color:var(--mut)}
+.c-p{left:40px;min-width:38px}.c-b{left:78px;min-width:38px}
+.c-s{left:116px;min-width:40px;border-right:2px solid var(--line)}th.c-s{border-right:2px solid var(--line)}
+.dot{display:inline-block;width:15px;height:15px;border-radius:50%}.dot.p{background:var(--blue)}.dot.b{background:var(--red)}
+.s-w{color:var(--green);font-weight:800}.s-l{color:var(--red);font-weight:800}
+td.val{color:var(--pos);font-weight:600}td.val.neg{color:var(--neg)}td.val.zero{color:var(--zero)}
+td.val.x{color:var(--x);font-weight:800}td.val.four{font-weight:800}td.val.opened{background:var(--grey-bg)}
+td.val.h5{background:var(--yellow)}td.val.h5.live{background:var(--yellow-b);box-shadow:inset 0 0 0 2px #f2c200}
+td.empty{background:#fff}
+.emptymsg{text-align:center;color:var(--mut);font-size:13px;padding:26px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--mut);font-weight:600}
+.legend span{display:inline-flex;align-items:center;gap:5px}.sw{width:13px;height:13px;border-radius:3px;display:inline-block}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin:18px 0 14px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.field input{font-family:inherit;font-size:16px;font-weight:700;width:90px;padding:10px;border:1px solid var(--line);border-radius:10px;color:var(--ink);text-align:center}
+button{font-family:inherit;cursor:pointer;font-weight:800;border:none;border-radius:11px;transition:.12s;color:#fff}
+button:active{transform:translateY(1px)}
+.b-p{background:var(--blue);font-size:17px;padding:14px 28px}.b-b{background:var(--red);font-size:17px;padding:14px 28px}
+.b-u{background:#eef1f6;color:var(--ink);font-size:14px;padding:14px 18px}
+.b-r{background:#fff;color:var(--red);border:1px solid #f2c6cd;font-size:14px;padding:14px 18px}
+.alert{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.alert.watch{background:var(--head)}
+.alert.B{background:linear-gradient(90deg,rgba(224,54,74,.1),rgba(224,54,74,.02));border-color:#f2b8c1}
+.alert.P{background:linear-gradient(90deg,rgba(47,111,237,.1),rgba(47,111,237,.02));border-color:#b7cdfb}
+.alert .big{font-size:19px;font-weight:800}.alert.B .big{color:var(--red)}.alert.P .big{color:var(--blue)}
+.alert .lil{font-size:12px;color:var(--mut);font-weight:600;margin-top:2px}
+.prog{display:flex;gap:6px}
+.pchip{width:34px;height:34px;border-radius:9px;background:var(--head);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--mut)}
+.pchip.on{background:var(--ink);color:#fff;border-color:var(--ink)}.pchip.done{background:var(--green);color:#fff;border-color:var(--green)}
+.mmrow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
+.mm{border:1px solid var(--line);border-radius:11px;padding:10px 8px;text-align:center}
+.mm .l{font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.mm .v{font-size:20px;font-weight:800;margin-top:3px}.mm .v.pos{color:var(--green)}.mm .v.neg{color:var(--neg)}
+.srow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.sbox{border:1px solid var(--line);border-radius:11px;padding:11px 13px;display:flex;justify-content:space-between;align-items:center}
+.sbox .sl{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.sbox .sv{font-size:15px;font-weight:800}
+/* chart */
+.chartbox{border:1px solid var(--line);border-radius:12px;padding:14px 0 6px;margin-top:6px}
+.chead{display:flex;justify-content:space-between;align-items:baseline;padding:0 16px 10px;flex-wrap:wrap;gap:8px}
+.ctitle{font-size:13px;font-weight:800}
+.cstate{font-size:12px;font-weight:800}
+.cstate.bull{color:var(--red)}.cstate.bear{color:var(--blue)}.cstate.flat{color:var(--mut)}
+.cscroll{overflow-x:auto;padding:0 12px}
+.crow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 16px 4px}
+.cstat{border:1px solid var(--line);border-radius:10px;padding:9px 11px;text-align:center}
+.cstat .cl{font-size:10px;letter-spacing:.4px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.cstat .cv{font-size:15px;font-weight:800;margin-top:3px}
+.note{font-size:11.5px;color:var(--mut);margin-top:14px;line-height:1.6}.note b{color:var(--ink)}
+@media(max-width:640px){.mmrow{grid-template-columns:repeat(2,1fr)}.crow{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="head"><h1>Binary Baccarat</h1><div class="counts" id="counts"></div></div>
+  <div class="sub"><b>H4</b> (s,0,s,0) → bet the same sign back. <b>H5</b> (5 in {−1,0,+1} at ±1) → bet for <b>0</b>. After a win the line keeps running, betting every 0 it can reach. Columns read independently — nested setups hand off. 0-bets outrank sign-bets.</div>
+
+  <div class="scroll"><div id="tableWrap"></div></div>
+  <div class="legend">
+    <span><span class="sw" style="background:var(--yellow)"></span> qualifying setup</span>
+    <span><span class="sw" style="background:var(--yellow-b)"></span> live — bet now</span>
+    <span><span class="sw" style="background:var(--grey-bg)"></span> column opened</span>
+  </div>
+
+  <div class="controls">
+    <div class="field"><label>Base bet</label><input id="base" type="number" min="0.5" step="0.5" value="1" oninput="save();render()"></div>
+    <button class="b-p" onclick="add('P')">● Player</button>
+    <button class="b-b" onclick="add('B')">● Banker</button>
+    <button class="b-u" onclick="undo()">Undo</button>
+    <button class="b-r" onclick="reset()">New Card</button>
+  </div>
+
+  <div class="alert watch" id="alert"><div><div class="big" id="alertBig">Watching…</div><div class="lil" id="alertLil"></div></div>
+    <div class="prog" id="prog"></div></div>
+
+  <div class="mmrow">
+    <div class="mm"><div class="l">Base</div><div class="v" id="mmBase">1</div></div>
+    <div class="mm"><div class="l">Next stake</div><div class="v" id="mmNext">1</div></div>
+    <div class="mm"><div class="l">P&amp;L (u)</div><div class="v" id="mmPnl">0</div></div>
+    <div class="mm"><div class="l">W – L</div><div class="v" id="mmWL">0–0</div></div>
+    <div class="mm"><div class="l">Targets (+10)</div><div class="v" id="mmTgt">0</div></div>
+  </div>
+  <div class="srow">
+    <div class="sbox"><span class="sl">Sign bets (±1)</span><span class="sv" id="stSign">—</span></div>
+    <div class="sbox"><span class="sl">Zero bets (0)</span><span class="sv" id="stZero">—</span></div>
+  </div>
+
+  <div class="chartbox">
+    <div class="chead"><span class="ctitle">Breakout chart · Banker highs vs Player lows</span><span class="cstate flat" id="cState">—</span></div>
+    <div class="cscroll" id="chartWrap"></div>
+    <div class="crow">
+      <div class="cstat"><div class="cl">Level · high · low</div><div class="cv" id="cLvl">—</div></div>
+      <div class="cstat"><div class="cl">After a new B-high → next</div><div class="cv" id="cHi">—</div></div>
+      <div class="cstat"><div class="cl">After a new P-low → next</div><div class="cv" id="cLo">—</div></div>
+    </div>
+  </div>
+
+  <div class="note">Plan <b>1·2·3·4</b> — four straight = <b>+10u</b> and the shoe is done. A cycle ending <b>negative</b> bumps the base +1; flat or positive leaves it alone. A line dies when its column leaves the {−1,0,+1} band. Ties aren't recorded. The chart is <b>information only</b> — it never changes a bet.</div>
+</div>
+
+<script>
+const KEY='baccaratBinary_v1';
+let outcomes=[];
+function getBase(){const v=parseFloat(document.getElementById('base').value);return isNaN(v)||v<=0?1:v;}
+const opp=s=>s==='B'?'P':'B';
+const inb=v=>typeof v==='number'&&Math.abs(v)<=1;
+const sideFor=(cur,target,last)=>((target-cur)===1?opp(last):last);
+
+function build(outcomes){
+  const cols=[]; const opened=new Set();
+  for(let r=0;r<outcomes.length;r++){
+    const delta=r>0?(outcomes[r]!==outcomes[r-1]?1:-1):null;
+    for(const col of cols){
+      if(col.state==='stopped')continue;
+      if(col.state==='limit'){col.cells[r]='X';col.state='stopped';continue;}
+      if(delta===null)continue;
+      const nv=col.value+delta;col.value=nv;col.cells[r]=nv;
+      if(Math.abs(nv)===4)col.state='limit';
+    }
+    let hasPos=false,hasNeg=false;
+    for(const col of cols){const v=col.cells[r];if(v===1)hasPos=true;if(v===-1)hasNeg=true;}
+    if(!hasPos){const i=cols.length;cols.push({cells:{[r]:1},value:1,state:'active'});opened.add(r+'-'+i);}
+    if(!hasNeg){const i=cols.length;cols.push({cells:{[r]:-1},value:-1,state:'active'});opened.add(r+'-'+i);}
+  }
+  return {cols,opened};
+}
+
+function engine(outcomes){
+  const base0=getBase();
+  const {cols,opened}=build(outcomes);
+  const N=outcomes.length;
+  const V=(c,r)=>cols[c].cells[r];
+  const live={};
+  let base=base0, step=1, cycle=0;
+  let pnl=0,wins=0,losses=0,targets=0,signW=0,signL=0,zeroW=0,zeroL=0;
+  const sMarks={},log=[],hl=new Set(),liveHl=new Set();
+  let pending=null,liveBet=null;
+  for(let r=0;r<N;r++){
+    if(pending&&pending.row===r){
+      const v=V(pending.col,r);
+      const win=(v===pending.target);
+      sMarks[r]=win?'W':'L';
+      log.push({row:r,col:pending.col,type:pending.type,target:pending.target,stake:pending.stake,step:pending.step,res:win?'W':'L'});
+      if(pending.target===0){win?zeroW++:zeroL++;}else{win?signW++:signL++;}
+      if(win){pnl+=pending.stake;wins++;cycle+=pending.stake;step++;live[pending.col]=true;
+        if(step>4){targets++;step=1;cycle=0;base=base0;}
+      }else{pnl-=pending.stake;losses++;cycle-=pending.stake;live[pending.col]=false;
+        if(cycle<0)base+=1; step=1;cycle=0;}
+      pending=null;
+    }
+    for(const c in live){const v=V(+c,r); if(v!==undefined&&!inb(v))live[c]=false;}
+    if(!pending){
+      const cand=[];
+      for(let c=0;c<cols.length;c++){
+        const v=V(c,r); if(!inb(v))continue;
+        if(live[c]){ if(Math.abs(v)===1)cand.push({col:c,type:'cont',from:v,target:0}); continue; }
+        if(r>=4&&Math.abs(v)===1){let ok=true;for(let k=r-4;k<=r;k++)if(!inb(V(c,k)))ok=false;
+          if(ok)cand.push({col:c,type:'H5',from:v,target:0});}
+        if(r>=3&&v===0){const w=[V(c,r-3),V(c,r-2),V(c,r-1),V(c,r)];
+          if(w.every(inb)&&w[1]===0&&Math.abs(w[0])===1&&w[0]===w[2])cand.push({col:c,type:'H4',from:0,target:w[0]});}
+      }
+      cand.sort((a,b)=>(a.target===0?0:1)-(b.target===0?0:1)||a.col-b.col);
+      if(cand.length){
+        const p=cand[0];
+        pending={col:p.col,type:p.type,from:p.from,target:p.target,side:sideFor(p.from,p.target,outcomes[r]),stake:base*step,step,row:r+1};
+        const span=(p.type==='H4')?3:(p.type==='H5'?4:0);
+        for(let k=r-span;k<=r;k++)hl.add(k+'-'+p.col);
+        if(r+1===N)for(let k=r-span;k<=r;k++)liveHl.add(k+'-'+p.col);
+      }
+    }
+  }
+  if(pending&&pending.row===N)liveBet=pending;
+  return {cols,opened,sMarks,log,hl,liveHl,base,step,pnl,wins,losses,targets,liveBet,nextStake:base*step,signW,signL,zeroW,zeroL};
+}
+
+function walk(outcomes){
+  let v=0,hi=0,lo=0;const pts=[];
+  for(let i=0;i<outcomes.length;i++){
+    v+=outcomes[i]==='B'?1:-1;
+    let brk=null;
+    if(v>hi){hi=v;brk='high';}else if(v<lo){lo=v;brk='low';}
+    pts.push({i,v,side:outcomes[i],brk});
+  }
+  return {pts,hi,lo,v};
+}
+function afterBreak(pts){
+  let hB=0,hP=0,lB=0,lP=0;
+  pts.forEach((p,i)=>{const nx=pts[i+1];if(!nx)return;
+    if(p.brk==='high'){nx.side==='B'?hB++:hP++;}
+    else if(p.brk==='low'){nx.side==='B'?lB++:lP++;}});
+  return {hB,hP,lB,lP};
+}
+
+function fmt(n){return (Math.round(n*100)/100).toLocaleString(undefined,{maximumFractionDigits:2});}
+const TYPE={H4:'H4 sign',H5:'H5 → 0',cont:'run → 0'};
+const pct=(w,l)=>(w+l)?Math.round(w/(w+l)*100)+'%':'—';
+
+function renderChart(){
+  const W=walk(outcomes), pts=W.pts;
+  const wrap=document.getElementById('chartWrap');
+  if(!pts.length){
+    wrap.innerHTML='<div style="color:#8a94a6;font-size:12.5px;padding:20px 4px">No hands yet — the line starts once you log an outcome.</div>';
+    document.getElementById('cState').textContent='—';
+    document.getElementById('cState').className='cstate flat';
+    document.getElementById('cLvl').textContent='—';
+    document.getElementById('cHi').textContent='—';
+    document.getElementById('cLo').textContent='—';
+    return;
+  }
+  const CW=26,RH=19,LEFT=34,TOP=12;
+  const hi=Math.max(1,W.hi), lo=Math.min(-1,W.lo);
+  const rows=hi-lo;
+  const H=TOP*2+rows*RH;
+  const width=LEFT+pts.length*CW+14;
+  const X=i=>LEFT+i*CW+CW/2;
+  const Y=v=>TOP+(hi-v)*RH;
+  let svg='<svg width="'+width+'" height="'+H+'" style="display:block">';
+  for(let v=hi;v>=lo;v--){
+    const y=Y(v), zero=(v===0);
+    svg+='<line x1="'+LEFT+'" y1="'+y+'" x2="'+(width-6)+'" y2="'+y+'" stroke="'+(zero?'#c9d2e0':'#f0f3f8')+'" stroke-width="'+(zero?1.4:1)+'"/>';
+    if(v===hi||v===lo||zero||v%2===0)
+      svg+='<text x="'+(LEFT-7)+'" y="'+(y+4)+'" text-anchor="end" font-size="9.5" font-weight="700" fill="#aab2c2">'+v+'</text>';
+  }
+  let path='';
+  pts.forEach((p,i)=>{path+=(i?' L ':'M ')+X(i)+' '+Y(p.v);});
+  svg+='<path d="'+path+'" fill="none" stroke="#c9d2e0" stroke-width="2" stroke-linejoin="round"/>';
+  pts.forEach((p,i)=>{
+    const x=X(i),y=Y(p.v),c=p.side==='B'?'#e0364a':'#2f6fed';
+    if(p.brk)svg+='<circle cx="'+x+'" cy="'+y+'" r="9" fill="none" stroke="#f0ab00" stroke-width="2"/>';
+    svg+='<circle cx="'+x+'" cy="'+y+'" r="6" fill="'+c+'"/>';
+    if((i+1)%5===0||i===pts.length-1)
+      svg+='<text x="'+x+'" y="'+(H-2)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#c2c9d6">'+(i+1)+'</text>';
+  });
+  svg+='</svg>';
+  wrap.innerHTML=svg;
+
+  const last=pts[pts.length-1];
+  const cs=document.getElementById('cState');
+  if(last.brk==='high'){cs.textContent='▲ Banker breakout — new high';cs.className='cstate bull';}
+  else if(last.brk==='low'){cs.textContent='▼ Player breakout — new low';cs.className='cstate bear';}
+  else{cs.textContent='range — '+(W.hi-W.v)+' to high, '+(W.v-W.lo)+' to low';cs.className='cstate flat';}
+  document.getElementById('cLvl').textContent=(W.v>0?'+':'')+W.v+'  ·  +'+W.hi+'  ·  '+W.lo;
+  const a=afterBreak(pts);
+  document.getElementById('cHi').textContent=(a.hB+a.hP)?('B '+a.hB+' – P '+a.hP+'  ·  '+pct(a.hB,a.hP)+' B'):'—';
+  document.getElementById('cLo').textContent=(a.lB+a.lP)?('P '+a.lP+' – B '+a.lB+'  ·  '+pct(a.lP,a.lB)+' P'):'—';
+}
+
+function render(){
+  const st=engine(outcomes);
+  const {cols,opened,sMarks,hl,liveHl}=st;
+  const nCols=cols.length,nRows=outcomes.length,lb=st.liveBet;
+
+  const al=document.getElementById('alert');
+  if(lb){
+    const nm=lb.side==='B'?'BANKER':'PLAYER';
+    al.className='alert '+lb.side;
+    document.getElementById('alertBig').textContent='BET '+nm+' · '+fmt(lb.stake)+'u';
+    document.getElementById('alertLil').textContent='col '+(lb.col+1)+' · '+TYPE[lb.type]+' · '+(lb.from>0?'+1':lb.from<0?'−1':'0')+' → '+(lb.target>0?'+1':lb.target<0?'−1':'0')+' · step '+lb.step+' of 4';
+  }else{
+    al.className='alert watch';
+    document.getElementById('alertBig').textContent='Watching…';
+    document.getElementById('alertLil').textContent=nRows<4?'need at least 4 rows in a column':'no column qualifies right now';
+  }
+  document.getElementById('prog').innerHTML=[1,2,3,4].map(i=>{
+    const done=(i<st.step),on=(i===st.step&&lb);
+    return '<div class="pchip'+(done?' done':'')+(on?' on':'')+'">'+i+'</div>';}).join('');
+
+  document.getElementById('mmBase').textContent=fmt(st.base);
+  document.getElementById('mmNext').textContent=fmt(st.nextStake);
+  const pl=document.getElementById('mmPnl');pl.textContent=(st.pnl>=0?'+':'')+fmt(st.pnl);pl.className='v '+(st.pnl>=0?'pos':'neg');
+  document.getElementById('mmWL').textContent=st.wins+'–'+st.losses;
+  document.getElementById('mmTgt').textContent=st.targets;
+  document.getElementById('stSign').textContent=st.signW+'–'+st.signL+'  ·  '+pct(st.signW,st.signL);
+  document.getElementById('stZero').textContent=st.zeroW+'–'+st.zeroL+'  ·  '+pct(st.zeroW,st.zeroL);
+
+  const gridCount=Math.max(nCols,10);
+  let head='<tr><th class="fix c-num">#</th><th class="fix c-p">P</th><th class="fix c-b">B</th><th class="fix c-s">S</th>';
+  for(let c=0;c<gridCount;c++)head+='<th>'+(c+1)+'</th>';head+='</tr>';
+  let body='';
+  if(nRows===0){
+    body='<tr><td class="fix c-num">1</td><td class="fix c-p"></td><td class="fix c-b"></td><td class="fix c-s"></td>'+
+      '<td class="emptymsg" colspan="'+gridCount+'">Tap Player or Banker to start the card.</td></tr>';
+  }else{
+    for(let r=0;r<nRows;r++){
+      const o=outcomes[r],s=sMarks[r];
+      body+='<tr>';
+      body+='<td class="fix c-num">'+(r+1)+'</td>';
+      body+='<td class="fix c-p">'+(o==='P'?'<span class="dot p"></span>':'')+'</td>';
+      body+='<td class="fix c-b">'+(o==='B'?'<span class="dot b"></span>':'')+'</td>';
+      body+='<td class="fix c-s">'+(s?('<span class="s-'+s.toLowerCase()+'">'+s+'</span>'):'')+'</td>';
+      for(let c=0;c<gridCount;c++){
+        const v=(c<nCols)?cols[c].cells[r]:undefined;
+        if(v===undefined){body+='<td class="empty"></td>';continue;}
+        let cls='val';
+        if(v==='X')cls+=' x';else{if(v<0)cls+=' neg';else if(v===0)cls+=' zero';if(Math.abs(v)===4)cls+=' four';}
+        if(opened.has(r+'-'+c))cls+=' opened';
+        if(hl.has(r+'-'+c))cls+=' h5';
+        if(liveHl.has(r+'-'+c))cls+=' h5 live';
+        const disp=(v==='X')?'X':(v>0?'+'+v:''+v);
+        body+='<td class="'+cls+'">'+disp+'</td>';
+      }
+      body+='</tr>';
+    }
+  }
+  document.getElementById('tableWrap').innerHTML='<table><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
+  const pc=outcomes.filter(x=>x==='P').length,bc=outcomes.filter(x=>x==='B').length;
+  document.getElementById('counts').innerHTML='<b>'+nRows+'</b> hands &nbsp;·&nbsp; <span class="cp">P '+pc+'</span> &nbsp; <span class="cb">B '+bc+'</span> &nbsp;·&nbsp; <b>'+nCols+'</b> columns';
+
+  renderChart();
+}
+
+function add(o){outcomes.push(o);save();render();}
+function undo(){outcomes.pop();save();render();}
+function reset(){if(confirm('Start a new card? This clears the current one.')){outcomes=[];save();render();}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({outcomes,base:document.getElementById('base').value}));}catch(e){}}
+try{const d=JSON.parse(localStorage.getItem(KEY));if(d){outcomes=d.outcomes||[];if(d.base!=null)document.getElementById('base').value=d.base;}}catch(e){}
+render();
+</script>
+</body>
+</html>
