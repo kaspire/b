@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary Baccarat · Clusters</title>
+<style>
+:root{--line:#e4e7ee;--line2:#eef1f6;--ink:#1f2733;--mut:#8a94a6;--blue:#2f6fed;--red:#e0364a;
+--neg:#d13b4c;--pos:#26324a;--zero:#aab2c2;--grey-bg:#eef1f6;--head:#f7f9fc;--x:#5a6474;
+--yellow:#fff3a8;--green:#1f9d57;--green-b:#38b869;--gold:#f0ab00;--lav:#efe9ff;--lav-b:#8b6fe0;--teal:#0fb5ba;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;background:#fff;color:var(--ink);padding:30px 16px 60px;-webkit-font-smoothing:antialiased}
+.card{max-width:1000px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 6px 26px rgba(31,39,51,.06)}
+.head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+h1{font-size:20px;font-weight:800}.sub{color:var(--mut);font-size:12.5px;margin-bottom:16px;line-height:1.5}
+.counts{font-size:12.5px;color:var(--mut);font-weight:600}.counts b{color:var(--ink)}.counts .cp{color:var(--blue)}.counts .cb{color:var(--red)}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;white-space:nowrap;min-width:100%}
+th,td{border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);text-align:center;font-size:13px;height:34px;min-width:34px;padding:0 6px;position:relative}
+thead th{background:var(--head);font-weight:800;color:var(--mut);font-size:11.5px;position:sticky;top:0;height:32px}
+tbody tr:last-child td{border-bottom:none}
+th.fix,td.fix{position:sticky;background:#fff;z-index:1}th.fix{background:var(--head)}
+.c-num{left:0;min-width:40px;font-weight:800;color:var(--mut)}
+.c-p{left:40px;min-width:38px}.c-b{left:78px;min-width:38px}
+.c-s{left:116px;min-width:40px;border-right:2px solid var(--line)}th.c-s{border-right:2px solid var(--line)}
+.dot{display:inline-block;width:15px;height:15px;border-radius:50%}.dot.p{background:var(--blue)}.dot.b{background:var(--red)}
+.s-w{color:var(--green);font-weight:800}.s-l{color:var(--red);font-weight:800}
+td.val{color:var(--pos);font-weight:600}td.val.neg{color:var(--neg)}td.val.zero{color:var(--zero)}
+td.val.x{color:var(--x);font-weight:800}td.val.four{font-weight:800}td.val.opened{background:var(--grey-bg)}
+td.empty{background:#fff}
+/* cluster cell = green outline; invalid lone 101 = light grey bg; fives markers = corner ticks */
+td.clus{background:#eafaf0}
+td.clus.live{box-shadow:inset 0 0 0 2px var(--gold)}
+td.lone{background:#f0f1f4}
+td.cbet{box-shadow:inset 0 0 0 2px var(--green-b)}
+.f5::after{content:'';position:absolute;top:2px;right:2px;width:6px;height:6px;border-radius:50%;background:var(--teal)}
+.f2::before{content:'';position:absolute;bottom:2px;left:2px;width:6px;height:6px;border-radius:2px;background:var(--lav-b);background:#8b6fe0}
+.emptymsg{text-align:center;color:var(--mut);font-size:13px;padding:26px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--mut);font-weight:600}
+.legend span{display:inline-flex;align-items:center;gap:5px}.sw{width:13px;height:13px;border-radius:3px;display:inline-block}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin:18px 0 14px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.field input{font-family:inherit;font-size:16px;font-weight:700;width:80px;padding:10px;border:1px solid var(--line);border-radius:10px;color:var(--ink);text-align:center}
+button{font-family:inherit;cursor:pointer;font-weight:800;border:none;border-radius:11px;transition:.12s;color:#fff}
+button:active{transform:translateY(1px)}
+.b-p{background:var(--blue);font-size:17px;padding:14px 28px}.b-b{background:var(--red);font-size:17px;padding:14px 28px}
+.b-u{background:#eef1f6;color:var(--ink);font-size:14px;padding:14px 18px}
+.b-r{background:#fff;color:var(--red);border:1px solid #f2c6cd;font-size:14px;padding:14px 18px}
+.opt{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:2px 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fbfcfe}
+.opt .lab{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.opt label{font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.alert{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.alert.watch{background:var(--head)}
+.alert.B{background:linear-gradient(90deg,rgba(224,54,74,.1),rgba(224,54,74,.02));border-color:#f2b8c1}
+.alert.P{background:linear-gradient(90deg,rgba(47,111,237,.1),rgba(47,111,237,.02));border-color:#b7cdfb}
+.alert .big{font-size:19px;font-weight:800}.alert.B .big{color:var(--red)}.alert.P .big{color:var(--blue)}
+.alert .lil{font-size:12px;color:var(--mut);font-weight:600;margin-top:2px}
+.mmrow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
+.mm{border:1px solid var(--line);border-radius:11px;padding:10px 8px;text-align:center}
+.mm .l{font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.mm .v{font-size:20px;font-weight:800;margin-top:3px}.mm .v.pos{color:var(--green)}.mm .v.neg{color:var(--neg)}
+.mm.hi{background:#f6fcf8;border-color:#bfe3cd}.mm.lo{background:#fff7f8;border-color:#f2c6cd}
+.panel{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.ptitle{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--mut);font-weight:700;margin-bottom:10px}
+.srow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.sbox{border:1px solid var(--line);border-radius:11px;padding:11px 13px;text-align:center}
+.sbox .sl{font-size:10.5px;letter-spacing:.4px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.sbox .sv{font-size:17px;font-weight:800;margin-top:3px}
+.sbox.t5{background:#f0fdfd;border-color:#b6e9eb}.sbox.t2{background:#f6f3ff;border-color:#d8ccf5}
+.note{font-size:11.5px;color:var(--mut);margin-top:14px;line-height:1.6}.note b{color:var(--ink)}
+@media(max-width:640px){.mmrow{grid-template-columns:repeat(2,1fr)}.srow{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="head"><h1>Binary Baccarat · Clusters</h1><div class="counts" id="counts"></div></div>
+  <div class="sub">Bets only <b>clusters</b>: two neighbour columns each running a 101, interlocked one row apart. Early bet on the first atom the moment the interlock is confirmed. Flat stake. The <b>fives</b> (10101 and 12121) are marked for study only — never bet.</div>
+
+  <div class="opt">
+    <span class="lab">Cluster bets</span>
+    <label><input type="radio" name="cb" id="cb1" value="1" checked onchange="save();render()"> 1 — first atom only</label>
+    <label><input type="radio" name="cb" id="cb2" value="2" onchange="save();render()"> 2 — first + neighbour (10-cluster)</label>
+    <span class="lab" style="margin-left:12px">Show fives</span>
+    <label><input type="checkbox" id="showF" checked onchange="save();render()"> mark 10101 / 12121</label>
+  </div>
+
+  <div class="scroll"><div id="tableWrap"></div></div>
+  <div class="legend">
+    <span><span class="sw" style="background:#eafaf0;box-shadow:inset 0 0 0 2px var(--green-b)"></span> cluster (played)</span>
+    <span><span class="sw" style="background:#f0f1f4"></span> lone 101 (observation)</span>
+    <span><span class="sw" style="background:var(--gold)"></span> live — bet now</span>
+    <span><span class="sw" style="background:var(--teal);border-radius:50%"></span> 10101 five</span>
+    <span><span class="sw" style="background:#8b6fe0;border-radius:2px"></span> 12121 five</span>
+  </div>
+
+  <div class="controls">
+    <div class="field"><label>Flat stake</label><input id="base" type="number" min="0.5" step="0.5" value="1" oninput="save();render()"></div>
+    <button class="b-p" onclick="add('P')">● Player</button>
+    <button class="b-b" onclick="add('B')">● Banker</button>
+    <button class="b-u" onclick="undo()">Undo</button>
+    <button class="b-r" onclick="reset()">New Card</button>
+  </div>
+
+  <div class="alert watch" id="alert"><div><div class="big" id="alertBig">Watching…</div><div class="lil" id="alertLil"></div></div></div>
+
+  <div class="mmrow">
+    <div class="mm hi"><div class="l">Max wins in a row</div><div class="v" id="mMaxW">0</div></div>
+    <div class="mm lo"><div class="l">Max losses in a row</div><div class="v" id="mMaxL">0</div></div>
+    <div class="mm"><div class="l">Clusters played</div><div class="v" id="mClus">0</div></div>
+    <div class="mm"><div class="l">W – L (flat)</div><div class="v" id="mWL">0–0</div></div>
+  </div>
+  <div class="mmrow">
+    <div class="mm"><div class="l">P&amp;L (u)</div><div class="v" id="mPnl">0</div></div>
+    <div class="mm"><div class="l">Current run</div><div class="v" id="mRun">—</div></div>
+    <div class="mm"><div class="l">Win %</div><div class="v" id="mPct">—</div></div>
+    <div class="mm"><div class="l">Lone 101s (skipped)</div><div class="v" id="mLone">0</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ptitle">Cluster strength — how far the 101s extended (stats, no bets)</div>
+    <div class="srow">
+      <div class="sbox"><div class="sl">Cluster 101s (the 3s)</div><div class="sv" id="s3">—</div></div>
+      <div class="sbox"><div class="sl">…that grew to a 4</div><div class="sv" id="s4">—</div></div>
+      <div class="sbox"><div class="sl">…that grew to a 5</div><div class="sv" id="s5">—</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ptitle">The fives — pattern texture (stats, no bets)</div>
+    <div class="srow">
+      <div class="sbox t5"><div class="sl">10101 fives</div><div class="sv" id="f10101">—</div></div>
+      <div class="sbox t2"><div class="sl">12121 fives</div><div class="sv" id="f12121">—</div></div>
+      <div class="sbox"><div class="sl">Came together (near)</div><div class="sv" id="fboth">—</div></div>
+    </div>
+    <div class="note" id="fNote" style="margin-top:10px"></div>
+  </div>
+
+  <div class="note">Flat stake on every cluster bet. A cluster needs the neighbour to read <b>10</b> or <b>101</b> interlocked one row off — if it ever reads <b>12</b> (breaks to ±2), the cluster is void and nothing is bet. <b>Lone 101s</b> (valid 101 but no one-row neighbour) are shaded grey for identification only. The <b>fives</b> are stats to see how 10101 and 12121 structure the shoe; they don't drive any bet.</div>
+</div>
+
+<script>
+const KEY='baccaratClusters_v1';
+let outcomes=[];
+const opp=s=>s==='B'?'P':'B';
+function getBase(){const v=parseFloat(document.getElementById('base').value);return isNaN(v)||v<=0?1:v;}
+function get2bet(){return document.getElementById('cb2').checked;}
+function getShowF(){return document.getElementById('showF').checked;}
+const pct=(w,l)=>(w+l)?Math.round(w/(w+l)*100)+'%':'—';
+function fmt(n){return (Math.round(n*100)/100).toLocaleString(undefined,{maximumFractionDigits:2});}
+
+function build(outcomes){
+  const cols=[]; const opened=new Set();
+  for(let r=0;r<outcomes.length;r++){
+    const delta=r>0?(outcomes[r]!==outcomes[r-1]?1:-1):null;
+    for(const col of cols){
+      if(col.state==='stopped')continue;
+      if(col.state==='limit'){col.cells[r]='X';col.state='stopped';continue;}
+      if(delta===null)continue;
+      const nv=col.value+delta;col.value=nv;col.cells[r]=nv;
+      if(Math.abs(nv)===4)col.state='limit';
+    }
+    let hasPos=false,hasNeg=false;
+    for(const col of cols){const v=col.cells[r];if(v===1)hasPos=true;if(v===-1)hasNeg=true;}
+    if(!hasPos){const i=cols.length;cols.push({cells:{[r]:1},value:1,state:'active'});opened.add(r+'-'+i);}
+    if(!hasNeg){const i=cols.length;cols.push({cells:{[r]:-1},value:-1,state:'active'});opened.add(r+'-'+i);}
+  }
+  return {cols,opened};
+}
+const V=(cols,c,r)=>cols[c].cells[r];
+const has101=(cols,c,r)=>{const a=V(cols,c,r-2),b=V(cols,c,r-1),v=V(cols,c,r);return typeof a==='number'&&typeof b==='number'&&typeof v==='number'&&b===0&&Math.abs(v)===1&&a===v;};
+function firstAtomValid(cols,c,r){
+  if(!has101(cols,c,r))return null;
+  for(const nc of[c-1,c+1]){if(nc<0||nc>=cols.length)continue;
+    const na=V(cols,nc,r-3),nb=V(cols,nc,r-2),nv=V(cols,nc,r-1);
+    if(typeof na==='number'&&nb===0&&Math.abs(nv)===1&&na===nv)return {nc,offset:-1,kind:'ahead'};
+    const p=V(cols,nc,r-1),q=V(cols,nc,r);
+    if(typeof p==='number'&&Math.abs(p)===1&&q===0)return {nc,offset:1,kind:'behind'};}
+  return null;}
+const is10101=(cols,c,r)=>{for(let k=r-4;k<=r;k++){const v=V(cols,c,k);if(typeof v!=='number'||Math.abs(v)>1)return false;}return Math.abs(V(cols,c,r))===1;};
+const is12121=(cols,c,r)=>{let u=true,l=true;for(let k=r-4;k<=r;k++){const v=V(cols,c,k);if(typeof v!=='number')return false;if(!(v>=1&&v<=2))u=false;if(!(v>=-2&&v<=-1))l=false;}return u||l;};
+
+function engine(outcomes){
+  const base=getBase(), two=get2bet();
+  const {cols,opened}=build(outcomes);
+  const N=outcomes.length;
+  let wins=0,losses=0,pnl=0,curW=0,curL=0,maxW=0,maxL=0,clusters=0,lone=0;
+  const sMarks={}, clusCells=new Set(), loneCells=new Set(), betCells=new Set(), liveCells=new Set();
+  let pending=null,liveBet=null;
+  const five5=new Set(),five2=new Set(); let both=0;
+
+  for(let r=0;r<N;r++){
+    if(pending&&pending.row===r){
+      const win=(V(cols,pending.col,r)===0);
+      sMarks[r]=win?'W':'L';
+      if(win){pnl+=base;wins++;curW++;curL=0;if(curW>maxW)maxW=curW;}
+      else{pnl-=base;losses++;curL++;curW=0;if(curL>maxL)maxL=curL;}
+      pending=null;
+    }
+    if(!pending&&r>=2){
+      // primary: first-atom valid cluster
+      let placed=false;
+      for(let c=0;c<cols.length;c++){
+        const f=firstAtomValid(cols,c,r);
+        if(f){
+          pending={col:c,row:r+1,neighbour:f.nc};
+          clusters++;
+          for(let k=r-2;k<=r;k++)clusCells.add(k+'-'+c);
+          if(r+1===N)for(let k=r-2;k<=r;k++)liveCells.add(k+'-'+c);
+          for(let k=r-2;k<=r;k++)betCells.add(k+'-'+c);
+          placed=true;break;
+        }
+      }
+      // mark lone 101s (valid 101 but no interlock) for identification — no bet
+      if(!placed){
+        for(let c=0;c<cols.length;c++){
+          if(has101(cols,c,r)&&!firstAtomValid(cols,c,r)){ lone++; for(let k=r-2;k<=r;k++)loneCells.add(k+'-'+c); }
+        }
+      }
+    }
+  }
+  if(pending&&pending.row===N)liveBet=pending;
+
+  // STATS PASS (independent of betting): fives + growth of cluster 101s
+  // 10101 fives and 12121 fives across all cells
+  for(let c=0;c<cols.length;c++){
+    const rs=Object.keys(cols[c].cells).map(Number).sort((a,b)=>a-b);
+    for(const r of rs){
+      if(r>=(rs[0]+4)&&is10101(cols,c,r))five5.add(r+'-'+c);
+      if(r>=(rs[0]+4)&&is12121(cols,c,r))five2.add(r+'-'+c);
+    }
+  }
+  // "grew to 4/5": of the cluster 101 completion cells, how many are also the end of an H4 (4-window in band ending ±1) / H5
+  // "grew to 4 / 5": a cluster 101 completes at (c,r) as s,0,s. Did the column EXTEND in-band forward?
+  // grew4 = the next cell (r+1) stays in band (|v|<=1) -> a 4th in-band cell = 1010; grew5 = r+1 and r+2 both in band = 10101.
+  const inband=(c,r)=>{const v=V(cols,c,r);return typeof v==='number'&&Math.abs(v)<=1;};
+  let g3=0,g4=0,g5=0;
+  for(let r=2;r<N;r++)for(let c=0;c<cols.length;c++){
+    if(firstAtomValid(cols,c,r)){ g3++;
+      if(inband(c,r+1))g4++;
+      if(inband(c,r+1)&&inband(c,r+2))g5++;
+    }
+  }
+  // co-occurrence "near": a 10101 five and a 12121 five within 2 columns and overlapping row band
+  const arr5=[...five5].map(s=>s.split('-').map(Number)), arr2=[...five2].map(s=>s.split('-').map(Number));
+  for(const [r5,c5] of arr5){ for(const [r2,c2] of arr2){ if(Math.abs(c5-c2)<=1&&Math.abs(r5-r2)<=4){both++;break;} } }
+
+  return {cols,opened,sMarks,clusCells,loneCells,betCells,liveCells,
+    wins,losses,pnl,maxW,maxL,curW,curL,clusters,lone,liveBet,base,
+    five5,five2,three:g3,grew4:g4,grew5:g5,bothNear:both};
+}
+
+function render(){
+  const st=engine(outcomes);
+  const {cols,opened,sMarks,clusCells,loneCells,liveCells}=st;
+  const showF=getShowF();
+  const nCols=cols.length,nRows=outcomes.length,lb=st.liveBet;
+
+  const al=document.getElementById('alert');
+  if(lb){
+    // bet side: col at +1 needs streak (same as last), at -1 needs chop (opposite)
+    const v=V(cols,lb.col,nRows-1);
+    const side=((0-v)===1)?opp(outcomes[nRows-1]):outcomes[nRows-1];
+    const nm=side==='B'?'BANKER':'PLAYER';
+    al.className='alert '+side;
+    document.getElementById('alertBig').textContent='BET '+nm+' · '+fmt(st.base)+'u';
+    document.getElementById('alertLil').textContent='cluster · col '+(lb.col+1)+' first atom → 0 · neighbour col '+(lb.neighbour+1);
+  }else{
+    al.className='alert watch';
+    document.getElementById('alertBig').textContent='Watching…';
+    document.getElementById('alertLil').textContent=nRows<4?'need two interlocked columns':'no cluster on the board right now';
+  }
+
+  document.getElementById('mMaxW').textContent=st.maxW;
+  document.getElementById('mMaxL').textContent=st.maxL;
+  document.getElementById('mClus').textContent=st.clusters;
+  document.getElementById('mWL').textContent=st.wins+'–'+st.losses;
+  const pl=document.getElementById('mPnl');pl.textContent=(st.pnl>=0?'+':'')+fmt(st.pnl);pl.className='v '+(st.pnl>=0?'pos':'neg');
+  document.getElementById('mRun').textContent=st.curW?('W'+st.curW):st.curL?('L'+st.curL):'—';
+  document.getElementById('mPct').textContent=pct(st.wins,st.losses);
+  document.getElementById('mLone').textContent=st.lone;
+
+  document.getElementById('s3').textContent=st.three;
+  document.getElementById('s4').textContent=st.three?(st.grew4+'  ('+Math.round(st.grew4/st.three*100)+'%)'):'—';
+  document.getElementById('s5').textContent=st.three?(st.grew5+'  ('+Math.round(st.grew5/st.three*100)+'%)'):'—';
+  document.getElementById('f10101').textContent=st.five5.size;
+  document.getElementById('f12121').textContent=st.five2.size;
+  document.getElementById('fboth').textContent=st.bothNear;
+  document.getElementById('fNote').innerHTML=(st.five5.size||st.five2.size)?
+    ('<b>'+st.five5.size+'</b> ten-oh-one fives and <b>'+st.five2.size+'</b> one-two fives so far; <b>'+st.bothNear+'</b> spots where the two sit within a column and a few rows of each other — where the texture doubles up.'):
+    'Fives appear once a column runs five deep in-band. They mark how the shoe is structured.';
+
+  // grid
+  const gridCount=Math.max(nCols,10);
+  let head='<tr><th class="fix c-num">#</th><th class="fix c-p">P</th><th class="fix c-b">B</th><th class="fix c-s">S</th>';
+  for(let c=0;c<gridCount;c++)head+='<th>'+(c+1)+'</th>';head+='</tr>';
+  let body='';
+  if(nRows===0){
+    body='<tr><td class="fix c-num">1</td><td class="fix c-p"></td><td class="fix c-b"></td><td class="fix c-s"></td>'+
+      '<td class="emptymsg" colspan="'+gridCount+'">Tap Player or Banker to start the card.</td></tr>';
+  }else{
+    for(let r=0;r<nRows;r++){
+      const o=outcomes[r],s=sMarks[r];
+      body+='<tr>';
+      body+='<td class="fix c-num">'+(r+1)+'</td>';
+      body+='<td class="fix c-p">'+(o==='P'?'<span class="dot p"></span>':'')+'</td>';
+      body+='<td class="fix c-b">'+(o==='B'?'<span class="dot b"></span>':'')+'</td>';
+      body+='<td class="fix c-s">'+(s?('<span class="s-'+s.toLowerCase()+'">'+s+'</span>'):'')+'</td>';
+      for(let c=0;c<gridCount;c++){
+        const v=(c<nCols)?cols[c].cells[r]:undefined;
+        if(v===undefined){body+='<td class="empty"></td>';continue;}
+        let cls='val',extra='';
+        if(v==='X')cls+=' x';else{if(v<0)cls+=' neg';else if(v===0)cls+=' zero';if(Math.abs(v)===4)cls+=' four';}
+        if(opened.has(r+'-'+c))cls+=' opened';
+        if(loneCells.has(r+'-'+c))cls+=' lone';
+        if(clusCells.has(r+'-'+c))cls+=' clus';
+        if(liveCells.has(r+'-'+c))cls+=' clus live';
+        if(clusCells.has(r+'-'+c))cls+=' cbet';
+        if(showF){ if(st.five5.has(r+'-'+c))extra+=' f5'; if(st.five2.has(r+'-'+c))extra+=' f2'; }
+        const disp=(v==='X')?'X':(v>0?'+'+v:''+v);
+        body+='<td class="'+cls+extra+'">'+disp+'</td>';
+      }
+      body+='</tr>';
+    }
+  }
+  document.getElementById('tableWrap').innerHTML='<table><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
+  const pcC=outcomes.filter(x=>x==='P').length,bcC=outcomes.filter(x=>x==='B').length;
+  document.getElementById('counts').innerHTML='<b>'+nRows+'</b> hands &nbsp;·&nbsp; <span class="cp">P '+pcC+'</span> &nbsp; <span class="cb">B '+bcC+'</span> &nbsp;·&nbsp; <b>'+nCols+'</b> columns';
+}
+
+function add(o){outcomes.push(o);save();render();}
+function undo(){outcomes.pop();save();render();}
+function reset(){if(confirm('Start a new card? This clears the current one.')){outcomes=[];save();render();}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({outcomes,base:document.getElementById('base').value,two:get2bet(),showF:getShowF()}));}catch(e){}}
+try{const d=JSON.parse(localStorage.getItem(KEY));if(d){outcomes=d.outcomes||[];if(d.base!=null)document.getElementById('base').value=d.base;
+  if(d.two){document.getElementById('cb2').checked=true;document.getElementById('cb1').checked=false;}
+  if(d.showF===false)document.getElementById('showF').checked=false;}}catch(e){}
+render();
+</script>
+</body>
+</html>
