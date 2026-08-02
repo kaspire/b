@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The ONE</title>
+<style>
+:root{--line:#e4e7ee;--line2:#eef1f6;--ink:#1f2733;--mut:#8a94a6;--blue:#2f6fed;--red:#e0364a;
+--neg:#d13b4c;--pos:#26324a;--zero:#aab2c2;--grey-bg:#eef1f6;--head:#f7f9fc;--x:#5a6474;
+--yellow:#fff3a8;--yellow-b:#ffe873;--green:#1f9d57;--green-b:#38b869;--gold:#f0ab00;--teal:#12b886;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;background:#f4f6fa;color:var(--ink);padding:26px 16px 60px;-webkit-font-smoothing:antialiased}
+.card{max-width:1280px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:0 8px 30px rgba(31,39,51,.07)}
+.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px}
+h1{font-size:24px;font-weight:900;letter-spacing:-.5px}
+.badge{font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#fff;background:linear-gradient(90deg,var(--ink),#3a4658);padding:4px 10px;border-radius:20px}
+.counts{font-size:12.5px;color:var(--mut);font-weight:600}.counts b{color:var(--ink)}
+.sub{color:var(--mut);font-size:12.5px;margin-bottom:16px;line-height:1.5}
+.layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px}
+@media(max-width:960px){.layout{grid-template-columns:1fr}}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table.grid{border-collapse:collapse;font-variant-numeric:tabular-nums;white-space:nowrap;min-width:100%}
+.grid th,.grid td{border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);text-align:center;font-size:13px;height:32px;min-width:32px;padding:0 5px;position:relative}
+.grid thead th{background:var(--head);font-weight:800;color:var(--mut);font-size:11px;position:sticky;top:0}
+.grid tbody tr:last-child td{border-bottom:none}
+.grid th.fix,.grid td.fix{position:sticky;background:#fff;z-index:1}.grid th.fix{background:var(--head)}
+.c-num{left:0;min-width:34px;font-weight:800;color:var(--mut)}
+.c-p{left:34px;min-width:32px}.c-b{left:66px;min-width:32px}
+.c-s{left:98px;min-width:34px;border-right:2px solid var(--line)}.grid th.c-s{border-right:2px solid var(--line)}
+.dot{display:inline-block;width:14px;height:14px;border-radius:50%}.dot.p{background:var(--blue)}.dot.b{background:var(--red)}
+.s-w{color:var(--green);font-weight:800}.s-l{color:var(--red);font-weight:800}
+td.val{color:var(--pos);font-weight:600}td.val.neg{color:var(--neg)}td.val.zero{color:var(--zero)}
+td.val.x{color:var(--x);font-weight:800}td.val.four{font-weight:800}td.val.opened{background:var(--grey-bg)}
+td.empty{background:#fff}
+td.five{background:var(--yellow)}
+td.five.live{background:var(--yellow-b);box-shadow:inset 0 0 0 2px var(--gold)}
+td.qual{background:#efe9ff;box-shadow:inset 0 0 0 1px #b9a4f2}
+.emptymsg{text-align:center;color:var(--mut);font-size:13px;padding:26px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:16px 0 12px}
+button{font-family:inherit;cursor:pointer;font-weight:800;border:none;border-radius:12px;transition:.12s;color:#fff}
+button:active{transform:translateY(1px)}
+.b-b{background:var(--red);font-size:16px;padding:15px 30px;box-shadow:0 2px 8px rgba(224,54,74,.25)}
+.b-p{background:var(--blue);font-size:16px;padding:15px 30px;box-shadow:0 2px 8px rgba(47,111,237,.25)}
+.b-t{background:var(--teal);font-size:15px;padding:15px 22px}
+.b-u{background:#eef1f6;color:var(--ink);font-size:14px;padding:15px 18px}
+.b-r{background:#fff;color:var(--red);border:1px solid #f2c6cd;font-size:14px;padding:15px 18px}
+.b-img{background:var(--ink);font-size:13px;padding:12px 18px;border-radius:10px}
+.ladsel{display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap}
+.ladsel .lab{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.lchip{padding:9px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--mut);font-weight:800;font-size:12.5px;cursor:pointer}
+.lchip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.alert{border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+.alert.watch{background:var(--head)}
+.alert.B{background:linear-gradient(90deg,rgba(224,54,74,.12),rgba(224,54,74,.02));border-color:#f2b8c1}
+.alert.P{background:linear-gradient(90deg,rgba(47,111,237,.12),rgba(47,111,237,.02));border-color:#b7cdfb}
+.alert .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.alert .big{font-size:22px;font-weight:900}.alert.B .big{color:var(--red)}.alert.P .big{color:var(--blue)}
+.alert .lil{font-size:12px;color:var(--mut);font-weight:600;margin-top:3px}
+.ladder{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.lstep{min-width:40px;padding:7px 4px;border-radius:9px;background:#fff;border:1px solid var(--line);text-align:center}
+.lstep .n{font-size:9px;font-weight:700;color:var(--mut);text-transform:uppercase}
+.lstep .u{font-size:15px;font-weight:800;margin-top:1px}
+.lstep.on{border-color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold);background:#fffdf5}
+.lstep.won{background:#eafaf0;border-color:var(--green-b)}.lstep.won .u{color:var(--green)}
+.lstep.lost{background:#fff1f3;border-color:#f2c6cd}.lstep.lost .u{color:var(--red)}
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+@media(max-width:760px){.statgrid{grid-template-columns:repeat(2,1fr)}}
+.st{border:1px solid var(--line);border-radius:12px;padding:11px 10px;text-align:center;background:#fff}
+.st .l{font-size:9.5px;letter-spacing:.4px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.st .v{font-size:19px;font-weight:800;margin-top:3px}.st .v.pos{color:var(--green)}.st .v.neg{color:var(--neg)}
+.st.hi{background:#f6fcf8;border-color:#bfe3cd}.st.lo{background:#fff7f8;border-color:#f2c6cd}
+.st.big .v{font-size:22px}
+.panel{border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;background:#fff}
+.ptitle{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--mut);font-weight:800;margin-bottom:12px;display:flex;justify-content:space-between}
+.wl{display:flex;gap:4px;flex-wrap:wrap}
+.wlc{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff}
+.wlc.w{background:var(--green)}.wlc.l{background:var(--red)}
+.failbars{display:flex;gap:8px;align-items:flex-end;height:90px}
+.fb{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%}
+.fb .bar{width:100%;border-radius:5px 5px 0 0;min-height:2px;background:linear-gradient(180deg,#f18a97,var(--red))}
+.fb .n{font-size:9.5px;font-weight:800;color:var(--mut)}.fb .c{font-size:10px;font-weight:800}
+.hbars{display:flex;gap:6px;align-items:flex-end;height:80px}
+.hb{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;height:100%}
+.hb .bar{width:100%;border-radius:4px 4px 0 0;min-height:2px}
+.hb .bar.pos{background:linear-gradient(180deg,#57c98d,var(--green))}.hb .bar.neg{background:linear-gradient(180deg,#f18a97,var(--red))}
+.hb .n{font-size:8.5px;font-weight:700;color:var(--mut)}.hb .c{font-size:9px;font-weight:800}
+.note{font-size:11.5px;color:var(--mut);margin-top:6px;line-height:1.6}.note b{color:var(--ink)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--mut);font-weight:600}
+.legend span{display:inline-flex;align-items:center;gap:5px}.sw{width:13px;height:13px;border-radius:3px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="head">
+    <div class="brand"><h1>The ONE</h1><span class="badge">10101 · ride or recover</span></div>
+    <div class="counts" id="counts"></div>
+  </div>
+  <div class="sub">A column running an in-band oscillation — pick <b>3 (101)</b>, <b>4 (0101)</b>, or <b>5 (10101)</b> as the minimum — arms a ladder. Each bet rides <b>±1 → 0</b>; we keep betting that column as it continues, until a loss. With <b>strict 1212</b> on, it only fires when another column is simultaneously running a 1212/2121 — the confirmation that takes off most loss strings.</div>
+
+  <div class="layout">
+    <div class="left">
+      <div class="scroll"><div id="tableWrap"></div></div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--yellow)"></span> five (10101) continuing</span>
+        <span><span class="sw" style="background:var(--yellow-b);box-shadow:inset 0 0 0 2px var(--gold)"></span> live — bet now</span>
+        <span><span class="sw" style="background:#efe9ff;box-shadow:inset 0 0 0 1px #b9a4f2"></span> 1212 qualifier</span>
+        <span><span class="sw" style="background:var(--grey-bg)"></span> column opened</span>
+      </div>
+      <div class="controls">
+        <button class="b-b" onclick="add('B')">● Banker</button>
+        <button class="b-p" onclick="add('P')">● Player</button>
+        <button class="b-t" onclick="addTie()">Tie</button>
+        <button class="b-u" onclick="undo()">Undo</button>
+        <button class="b-r" onclick="reset()">New Card</button>
+        <div class="ladsel">
+          <span class="lab">Ladder</span>
+          <div class="lchip on" id="lc1" onclick="setLadder(1)">1 · Ride</div>
+          <div class="lchip" id="lc2" onclick="setLadder(2)">2 · Recover</div>
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;margin-left:6px"><input type="checkbox" id="strictQ" onchange="save();render()"> strict 1212</label>
+          <span class="lab" style="margin-left:6px">Pattern</span>
+          <select id="minLen" onchange="save();render()" style="font-family:inherit;font-size:12.5px;font-weight:800;padding:8px 8px;border:1px solid var(--line);border-radius:9px;color:var(--ink);background:#fff;cursor:pointer">
+            <option value="5">5 only (10101)</option>
+            <option value="4">4+ (0101)</option>
+            <option value="3">3+ (101)</option>
+          </select>
+          <button class="b-img" onclick="exportImg()">Export table</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="alert watch" id="alert">
+        <div class="top"><div><div class="big" id="alertBig">Watching…</div><div class="lil" id="alertLil"></div></div></div>
+        <div class="ladder" id="ladderView"></div>
+      </div>
+
+      <div class="statgrid">
+        <div class="st big"><div class="l">Units won</div><div class="v" id="sUnits">0</div></div>
+        <div class="st big"><div class="l">ROI</div><div class="v" id="sROI">—</div></div>
+        <div class="st"><div class="l">Win %</div><div class="v" id="sWin">—</div></div>
+        <div class="st"><div class="l">Ladders done</div><div class="v" id="sLad">0</div></div>
+      </div>
+      <div class="statgrid">
+        <div class="st hi"><div class="l">Longest win streak</div><div class="v" id="sMaxW">0</div></div>
+        <div class="st lo"><div class="l">Longest loss streak</div><div class="v" id="sMaxL">0</div></div>
+        <div class="st"><div class="l">Max drawdown</div><div class="v" id="sDD">0</div></div>
+        <div class="st"><div class="l">Profit / ladder</div><div class="v" id="sPPL">—</div></div>
+      </div>
+      <div class="statgrid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="st"><div class="l">Banker %</div><div class="v" id="sB">—</div></div>
+        <div class="st"><div class="l">Player %</div><div class="v" id="sP">—</div></div>
+        <div class="st"><div class="l">Tie %</div><div class="v" id="sT">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ptitle">Bankroll over time</div>
+    <div id="bankChart"></div>
+  </div>
+
+  <div class="panel">
+    <div class="ptitle"><span>This shoe — bet results</span><span id="wlSummary" style="color:var(--ink)"></span></div>
+    <div class="wl" id="wlRow"></div>
+  </div>
+
+  <div class="statgrid" style="grid-template-columns:1fr 1fr">
+    <div class="panel" style="margin:0">
+      <div class="ptitle">Where ladders failed (step)</div>
+      <div class="failbars" id="failBars"></div>
+    </div>
+    <div class="panel" style="margin:0">
+      <div class="ptitle">Most profitable hands (by block)</div>
+      <div class="hbars" id="blockBars"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ptitle">Simultaneous fives — when more than one column shows a live five</div>
+    <div class="note" id="simNote"></div>
+  </div>
+
+  <div class="note"><b>Ladder 1 · Ride:</b> 1 · 2 · 1 · 3 · 5 · then 1 flat. <b>Ladder 2 · Recover:</b> 2 · 1 · 2 · 4 · then 1 flat. Same plan on every ladder — no increase after a loss. <b>Strict 1212:</b> only bet a 10101 when another column is simultaneously running a 1212/2121 — it roughly halves the bets and cuts the 2–5 loss strings (fewer bets, only in choppier shoes). Ties are counted in the stats but never entered on the grid. You manage the exit.</div>
+</div>
+
+<script>
+const KEY='baccaratTheOne_v1';
+let outcomes=[]; let ties=0; let ladderType=1;
+const opp=s=>s==='B'?'P':'B';
+const pct=(a,b)=>(a+b)?Math.round(a/(a+b)*100)+'%':'—';
+function fmt(n){return (Math.round(n*100)/100).toLocaleString(undefined,{maximumFractionDigits:2});}
+
+function build(outcomes){
+  const cols=[]; const opened=new Set();
+  for(let r=0;r<outcomes.length;r++){
+    const delta=r>0?(outcomes[r]!==outcomes[r-1]?1:-1):null;
+    for(const col of cols){
+      if(col.state==='stopped')continue;
+      if(col.state==='limit'){col.cells[r]='X';col.state='stopped';continue;}
+      if(delta===null)continue;
+      const nv=col.value+delta;col.value=nv;col.cells[r]=nv;
+      if(Math.abs(nv)===4)col.state='limit';
+    }
+    let hp=false,hn=false;
+    for(const col of cols){const v=col.cells[r];if(v===1)hp=true;if(v===-1)hn=true;}
+    if(!hp){const i=cols.length;cols.push({cells:{[r]:1},value:1,state:'active'});opened.add(r+'-'+i);}
+    if(!hn){const i=cols.length;cols.push({cells:{[r]:-1},value:-1,state:'active'});opened.add(r+'-'+i);}
+  }
+  return {cols,opened};
+}
+const V=(cols,c,r)=>cols[c].cells[r];
+const inband=(cols,c,r)=>{const v=V(cols,c,r);return typeof v==='number'&&Math.abs(v)<=1;};
+const isRun=(cols,c,r,L)=>{if(r<L-1)return false;for(let k=r-(L-1);k<=r;k++){if(!inband(cols,c,k))return false;}return Math.abs(V(cols,c,r))===1;};
+const is5=(cols,c,r)=>isRun(cols,c,r,5);
+const is1212=(cols,c,r)=>{if(r<3)return false;let u=true,l=true;for(let k=r-3;k<=r;k++){const v=V(cols,c,k);if(typeof v!=='number')return false;if(!(v>=1&&v<=2))u=false;if(!(v>=-2&&v<=-1))l=false;}return u||l;};
+function getMinLen(){const e=document.getElementById('minLen');const v=e?parseInt(e.value):5;return (v===3||v===4)?v:5;}
+function getStrict(){const e=document.getElementById('strictQ');return e?e.checked:false;}
+// a primary fires at row r in col c if it has an in-band run of at least minLen ending at r (current ±1)
+function primaryHit(cols,c,r,minLen){return isRun(cols,c,r,minLen);}
+function stake(step){
+  if(ladderType===1){const t=[1,2,1,3,5];return (step<=5?t[step-1]:1);}
+  else{const t=[2,1,2,4];return (step<=4?t[step-1]:1);}
+}
+
+function engine(outcomes){
+  const {cols,opened}=build(outcomes);
+  const N=outcomes.length;
+  const strict=getStrict(); const minLen=getMinLen();
+  let pend=null, active=null, pnl=0,wins=0,losses=0,peak=0,dd=0;
+  let curW=0,curL=0,maxW=0,maxL=0, staked=0;
+  const bets=[], ladders=[]; let cur=null; const bankSeries=[{i:0,v:0}];
+  const highlight=new Set(), liveCells=new Set(), qualCells=new Set(); const sMarks={};
+  const failCount={1:0,2:0,3:0,4:0,5:0,6:0}; const simEvents=[]; let skippedNoQual=0;
+  // mark run cells of the given length at (c,r) into a set
+  const markRun=(set,c,r)=>{let k=r;while(k>=0&&inband(cols,c,k)){set.add(k+'-'+c);k--;if(r-k>=5)break;}};
+  for(let r=0;r<N;r++){
+    if(pend&&pend.row===r){
+      const win=V(cols,pend.col,r)===0;
+      sMarks[r]=win?'W':'L';
+      bets.push({row:r,col:pend.col,step:pend.step,stake:pend.stake,res:win?'W':'L'});
+      staked+=pend.stake;
+      if(win){pnl+=pend.stake;wins++;curW++;curL=0;if(curW>maxW)maxW=curW;cur.steps.push('W');cur.profit+=pend.stake;active.step++;pend=null;}
+      else{pnl-=pend.stake;losses++;curL++;curW=0;if(curL>maxL)maxL=curL;cur.steps.push('L');cur.profit-=pend.stake;cur.failStep=pend.step;
+        failCount[Math.min(pend.step,6)]++;ladders.push(cur);active=null;cur=null;pend=null;}
+      if(pnl>peak)peak=pnl;if(peak-pnl>dd)dd=peak-pnl;
+      bankSeries.push({i:r+1,v:pnl});
+    }
+    if(active&&!pend){
+      const c=active.col;
+      if(inband(cols,c,r)&&Math.abs(V(cols,c,r))===1){
+        pend={col:c,row:r+1,step:active.step,stake:stake(active.step)};
+      }else if(!inband(cols,c,r)){ ladders.push(cur);active=null;cur=null; }
+    }
+    if(!active&&!pend&&r>=minLen-1){
+      const fivesHere=[];for(let c=0;c<cols.length;c++)if(primaryHit(cols,c,r,minLen))fivesHere.push(c);
+      const twelves=[];for(let c=0;c<cols.length;c++)if(is1212(cols,c,r))twelves.push(c);
+      if(fivesHere.length){
+        if(fivesHere.length>1)simEvents.push({row:r,cols:fivesHere.slice()});
+        let chosen=null,qcol=null;
+        for(const a of fivesHere){const q=twelves.find(b=>b!==a);if(q!==undefined){chosen=a;qcol=q;break;}}
+        if(strict){
+          if(chosen===null){skippedNoQual++;}
+          else{
+            active={col:chosen,step:1};cur={col:chosen,startRow:r,steps:[],profit:0,failStep:null};
+            pend={col:chosen,row:r+1,step:1,stake:stake(1)};
+            markRun(highlight,chosen,r);
+            for(let k=r-3;k<=r;k++)qualCells.add(k+'-'+qcol);
+          }
+        }else{
+          const c=chosen!==null?chosen:fivesHere[0];
+          active={col:c,step:1};cur={col:c,startRow:r,steps:[],profit:0,failStep:null};
+          pend={col:c,row:r+1,step:1,stake:stake(1)};
+          markRun(highlight,c,r);
+          if(qcol!==null&&chosen===c)for(let k=r-3;k<=r;k++)qualCells.add(k+'-'+qcol);
+        }
+      }
+    }
+    if(active){const c=active.col;if(inband(cols,c,r))highlight.add(r+'-'+c);
+      if(r===N-1){for(let k=Math.max(0,r-4);k<=r;k++)if(inband(cols,c,k))liveCells.add(k+'-'+c);}}
+  }
+  if(cur)ladders.push(cur);
+  let liveBet=null;
+  if(pend&&pend.row===N)liveBet={col:pend.col,step:pend.step,stake:pend.stake};
+  if(liveBet){for(let k=Math.max(0,N-1-4);k<=N-1;k++)if(inband(cols,liveBet.col,k))liveCells.add(k+'-'+liveBet.col);}
+
+  const blocks={};
+  bets.forEach(b=>{const blk=Math.floor(b.row/10);blocks[blk]=(blocks[blk]||0)+(b.res==='W'?b.stake:-b.stake);});
+
+  const completed=ladders.length;
+  const rideFull=ladders.filter(l=>l.steps.length>=(ladderType===1?5:4)&&!l.steps.includes('L')).length;
+  return {cols,opened,sMarks,highlight,liveCells,qualCells,liveBet,active,
+    pnl,wins,losses,maxW,maxL,maxDD:dd,staked,bets,ladders,completed,failCount,bankSeries,blocks,simEvents,rideFull,skippedNoQual,strict,
+    curStep:active?active.step:1};
+}
+
+function ladderStakes(){return ladderType===1?[1,2,1,3,5,'1…']:[2,1,2,4,'1…'];}
+
+function render(){
+  const st=engine(outcomes);
+  const {cols,opened,sMarks,highlight,liveCells,liveBet}=st;
+  const nCols=cols.length,nRows=outcomes.length;
+
+  // alert
+  const al=document.getElementById('alert');
+  if(liveBet){
+    const v=V(cols,liveBet.col,nRows-1);
+    const side=((0-v)===1)?opp(outcomes[nRows-1]):outcomes[nRows-1];
+    const nm=side==='B'?'BANKER':'PLAYER';
+    al.className='alert '+side;
+    document.getElementById('alertBig').textContent='BET '+nm+' · '+fmt(liveBet.stake)+'u';
+    document.getElementById('alertLil').textContent='col '+(liveBet.col+1)+' · '+(v>0?'+1':'-1')+' → 0 · bet '+liveBet.step+(st.active&&st.active.step>1?' · riding':'');
+  }else{
+    al.className='alert watch';
+    document.getElementById('alertBig').textContent='Watching…';
+    document.getElementById('alertLil').textContent=nRows<5?'need a column to reach five in-band':'no live five — waiting for the next 10101';
+  }
+  // ladder view
+  const stakes=ladderStakes();const curStep=liveBet?liveBet.step:(st.active?st.active.step:1);
+  const done=st.active?st.active.step-1:0;
+  document.getElementById('ladderView').innerHTML=stakes.map((s,i)=>{
+    const stepNo=i+1;const isOn=liveBet&&stepNo===curStep;const isWon=st.active&&stepNo<=done;
+    return '<div class="lstep'+(isOn?' on':'')+(isWon?' won':'')+'"><div class="n">bet '+(typeof s==='string'?'6+':stepNo)+'</div><div class="u">'+s+'</div></div>';
+  }).join('');
+
+  // stats
+  document.getElementById('sUnits').textContent=(st.pnl>=0?'+':'')+fmt(st.pnl);
+  document.getElementById('sUnits').className='v '+(st.pnl>=0?'pos':'neg');
+  document.getElementById('sROI').textContent=st.staked?((st.pnl/st.staked*100>=0?'+':'')+Math.round(st.pnl/st.staked*100)+'%'):'—';
+  document.getElementById('sROI').className='v '+(st.pnl>=0?'pos':'neg');
+  document.getElementById('sWin').textContent=pct(st.wins,st.losses);
+  document.getElementById('sLad').textContent=st.completed;
+  document.getElementById('sMaxW').textContent=st.maxW;
+  document.getElementById('sMaxL').textContent=st.maxL;
+  document.getElementById('sDD').textContent=st.maxDD?('−'+fmt(st.maxDD)):'0';
+  document.getElementById('sPPL').textContent=st.completed?fmt(st.pnl/st.completed)+'u':'—';
+  const b=outcomes.filter(x=>x==='B').length,p=outcomes.filter(x=>x==='P').length,tot=b+p+ties;
+  document.getElementById('sB').textContent=tot?Math.round(b/tot*100)+'%':'—';
+  document.getElementById('sP').textContent=tot?Math.round(p/tot*100)+'%':'—';
+  document.getElementById('sT').textContent=tot?Math.round(ties/tot*100)+'%':'—';
+
+  // WL row
+  const wl=st.bets.map(x=>'<div class="wlc '+(x.res==='W'?'w':'l')+'">'+x.res+'</div>').join('');
+  document.getElementById('wlRow').innerHTML=wl||'<span style="color:var(--mut);font-size:12px">No bets yet.</span>';
+  document.getElementById('wlSummary').textContent=st.bets.length?(st.wins+'W · '+st.losses+'L'+(st.rideFull?(' · '+st.rideFull+' full ride'+(st.rideFull>1?'s':'')):'')):'';
+
+  // bankroll chart
+  document.getElementById('bankChart').innerHTML=bankSVG(st.bankSeries);
+
+  // fail bars
+  const fc=st.failCount,fmax=Math.max(1,...Object.values(fc));
+  document.getElementById('failBars').innerHTML=[1,2,3,4,5,6].map(s=>
+    '<div class="fb"><div class="c">'+fc[s]+'</div><div class="bar" style="height:'+Math.round(fc[s]/fmax*100)+'%"></div><div class="n">'+(s<6?('bet '+s):'6+')+'</div></div>').join('');
+
+  // block bars
+  const blocks=st.blocks;const keys=Object.keys(blocks).map(Number).sort((a,b)=>a-b);
+  const bmax=Math.max(1,...keys.map(k=>Math.abs(blocks[k])));
+  document.getElementById('blockBars').innerHTML=keys.length?keys.map(k=>{
+    const val=blocks[k];const h=Math.round(Math.abs(val)/bmax*100);
+    return '<div class="hb"><div class="c" style="color:'+(val>=0?'var(--green)':'var(--red)')+'">'+(val>=0?'+':'')+fmt(val)+'</div><div class="bar '+(val>=0?'pos':'neg')+'" style="height:'+h+'%"></div><div class="n">'+(k*10+1)+'–'+(k*10+10)+'</div></div>';
+  }).join(''):'<span style="color:var(--mut);font-size:12px">No bets yet.</span>';
+
+  // sim note
+  const sim=st.simEvents;
+  if(sim.length||st.strict){
+    let bet12=0;st.bets.forEach(x=>{if(x.step<=2)bet12++;});
+    let msg='<b>'+sim.length+'</b> time'+(sim.length===1?'':'s')+' two or more columns showed a live five at the same row. Of all bets, <b>'+bet12+'</b> landed on bet 1 or 2 (the consecutive-entry stage).';
+    if(st.strict)msg+=' Strict 1212 is <b>ON</b> — <b>'+st.skippedNoQual+'</b> five'+(st.skippedNoQual===1?'':'s')+' skipped for having no 1212 partner.';
+    document.getElementById('simNote').innerHTML=msg;
+  }else{
+    document.getElementById('simNote').innerHTML='No rows yet where more than one column completed a five simultaneously. When it happens it will be logged here.';
+  }
+
+  // grid
+  const gridCount=Math.max(nCols,8);
+  let head='<tr><th class="fix c-num">#</th><th class="fix c-p">P</th><th class="fix c-b">B</th><th class="fix c-s">S</th>';
+  for(let c=0;c<gridCount;c++)head+='<th>'+(c+1)+'</th>';head+='</tr>';
+  let body='';
+  if(nRows===0){
+    body='<tr><td class="fix c-num">1</td><td class="fix c-p"></td><td class="fix c-b"></td><td class="fix c-s"></td><td class="emptymsg" colspan="'+gridCount+'">Tap Banker or Player to start.</td></tr>';
+  }else{
+    for(let r=0;r<nRows;r++){
+      const o=outcomes[r],s=sMarks[r];
+      body+='<tr>';
+      body+='<td class="fix c-num">'+(r+1)+'</td>';
+      body+='<td class="fix c-p">'+(o==='P'?'<span class="dot p"></span>':'')+'</td>';
+      body+='<td class="fix c-b">'+(o==='B'?'<span class="dot b"></span>':'')+'</td>';
+      body+='<td class="fix c-s">'+(s?('<span class="s-'+s.toLowerCase()+'">'+s+'</span>'):'')+'</td>';
+      for(let c=0;c<gridCount;c++){
+        const v=(c<nCols)?cols[c].cells[r]:undefined;
+        if(v===undefined){body+='<td class="empty"></td>';continue;}
+        let cls='val';
+        if(v==='X')cls+=' x';else{if(v<0)cls+=' neg';else if(v===0)cls+=' zero';if(Math.abs(v)===4)cls+=' four';}
+        if(opened.has(r+'-'+c))cls+=' opened';
+        if(st.qualCells.has(r+'-'+c))cls+=' qual';
+        if(highlight.has(r+'-'+c))cls+=' five';
+        if(liveCells.has(r+'-'+c))cls+=' five live';
+        const disp=(v==='X')?'X':(v>0?'+'+v:''+v);
+        body+='<td class="'+cls+'">'+disp+'</td>';
+      }
+      body+='</tr>';
+    }
+  }
+  document.getElementById('tableWrap').innerHTML='<table class="grid"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
+  const pcC=outcomes.filter(x=>x==='P').length,bcC=outcomes.filter(x=>x==='B').length;
+  document.getElementById('counts').innerHTML='<b>'+nRows+'</b> hands · <span style="color:var(--red)">B '+bcC+'</span> <span style="color:var(--blue)">P '+pcC+'</span> <span style="color:var(--teal)">T '+ties+'</span> · <b>'+nCols+'</b> cols';
+}
+
+function bankSVG(series){
+  if(series.length<2)return '<div style="color:#8a94a6;font-size:12px;padding:12px 2px">Bankroll line appears once you place bets.</div>';
+  const W=Math.max(600,series.length*8),H=150,PADL=34,PADB=18,PADT=10;
+  const vals=series.map(s=>s.v);let mn=Math.min(0,...vals),mx=Math.max(0,...vals);if(mn===mx){mn-=1;mx+=1;}
+  const iw=W-PADL-10,ih=H-PADB-PADT;
+  const X=i=>PADL+(i/(series.length-1))*iw, Y=v=>PADT+(mx-v)/(mx-mn)*ih;
+  let path='';series.forEach((s,i)=>{path+=(i?' L ':'M ')+X(i).toFixed(1)+' '+Y(s.v).toFixed(1);});
+  const zeroY=Y(0);
+  const end=series[series.length-1].v;const col=end>=0?'#1f9d57':'#e0364a';
+  let svg='<div style="overflow-x:auto"><svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" style="display:block">';
+  [mx,(mx+mn)/2,mn].forEach(gv=>{const y=Y(gv);svg+='<line x1="'+PADL+'" y1="'+y+'" x2="'+(W-8)+'" y2="'+y+'" stroke="#eef1f6"/><text x="'+(PADL-6)+'" y="'+(y+3)+'" text-anchor="end" font-size="9" font-weight="700" fill="#aab2c2">'+(gv>0?'+':'')+Math.round(gv)+'</text>';});
+  svg+='<line x1="'+PADL+'" y1="'+zeroY+'" x2="'+(W-8)+'" y2="'+zeroY+'" stroke="#c9d2e0" stroke-dasharray="3 3"/>';
+  svg+='<path d="'+path+'" fill="none" stroke="'+col+'" stroke-width="2.2" stroke-linejoin="round"/>';
+  const lx=X(series.length-1),ly=Y(end);
+  svg+='<circle cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="4" fill="'+col+'"/>';
+  svg+='</svg></div>';
+  return svg;
+}
+
+function add(o){outcomes.push(o);save();render();}
+function addTie(){ties++;save();render();}
+function undo(){if(outcomes.length)outcomes.pop();save();render();}
+function reset(){if(confirm('New card? Clears this shoe (grid + ties).')){outcomes=[];ties=0;save();render();}}
+function setLadder(n){ladderType=n;document.getElementById('lc1').className='lchip'+(n===1?' on':'');document.getElementById('lc2').className='lchip'+(n===2?' on':'');save();render();}
+
+function exportImg(){
+  const table=document.querySelector('#tableWrap table');
+  if(!table){alert('Nothing to export yet.');return;}
+  // render the grid to canvas manually (SVG foreignObject is unreliable); use a simple DOM-to-canvas draw
+  const rows=[...table.querySelectorAll('tr')];
+  const cellW=32,cellH=32,fixW=[34,32,32,34];
+  const nc=rows[0].children.length;
+  const totalFix=fixW.reduce((a,b)=>a+b,0);
+  const gridCols=nc-4;
+  const W=totalFix+gridCols*cellW+2, H=rows.length*cellH+40;
+  const S=2;const cv=document.createElement('canvas');cv.width=W*S;cv.height=H*S;
+  const ctx=cv.getContext('2d');ctx.scale(S,S);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  ctx.font='700 12px Inter, system-ui, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle='#1f2733';ctx.textAlign='left';ctx.fillText('The ONE · '+outcomes.length+' hands · '+new Date().toLocaleDateString(),6,14);
+  ctx.textAlign='center';
+  rows.forEach((tr,ri)=>{
+    const y=28+ri*cellH;let x=0;
+    [...tr.children].forEach((td,ci)=>{
+      const w=ci<4?fixW[ci]:cellW;
+      const cls=td.className||'';
+      let bg='#fff';
+      if(cls.includes('five')&&cls.includes('live'))bg='#ffe873';
+      else if(cls.includes('five'))bg='#fff3a8';
+      else if(cls.includes('opened'))bg='#eef1f6';
+      else if(ri===0)bg='#f7f9fc';
+      ctx.fillStyle=bg;ctx.fillRect(x,y,w,cellH);
+      ctx.strokeStyle='#eef1f6';ctx.strokeRect(x,y,w,cellH);
+      const dot=td.querySelector('.dot');
+      if(dot){ctx.fillStyle=dot.classList.contains('b')?'#e0364a':'#2f6fed';ctx.beginPath();ctx.arc(x+w/2,y+cellH/2,6,0,7);ctx.fill();}
+      else{let txt=td.textContent.trim();if(txt){
+        const val=td.classList;
+        ctx.fillStyle=val.contains('neg')?'#d13b4c':val.contains('zero')?'#aab2c2':val.contains('x')?'#5a6474':val.contains('s-w')?'#1f9d57':val.contains('s-l')?'#e0364a':(ri===0?'#8a94a6':'#26324a');
+        if(td.querySelector('.s-w'))ctx.fillStyle='#1f9d57';if(td.querySelector('.s-l'))ctx.fillStyle='#e0364a';
+        ctx.font=(ri===0?'800 ':'700 ')+'11px Inter, system-ui, sans-serif';
+        ctx.fillText(txt,x+w/2,y+cellH/2+1);
+      }}
+      x+=w;
+    });
+  });
+  cv.toBlob(function(bl){if(!bl){alert('Export failed.');return;}const u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download='the_one_table.png';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);},'image/png');
+}
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify({outcomes,ties,ladderType,strict:document.getElementById('strictQ').checked,minLen:document.getElementById('minLen').value}));}catch(e){}}
+try{const d=JSON.parse(localStorage.getItem(KEY));if(d){outcomes=d.outcomes||[];ties=d.ties||0;ladderType=d.ladderType||1;
+  if(d.strict)document.getElementById('strictQ').checked=true;
+  if(d.minLen)document.getElementById('minLen').value=d.minLen;
+  document.getElementById('lc1').className='lchip'+(ladderType===1?' on':'');document.getElementById('lc2').className='lchip'+(ladderType===2?' on':'');}}catch(e){}
+render();
+</script>
+</body>
+</html>
